@@ -48,6 +48,13 @@ export type BoardAnnotation =
       to: string;
     };
 
+export type MoveAnnotationTone = 'good' | 'mistake' | 'brilliant' | 'blunder' | 'interesting' | 'dubious';
+
+export interface MoveAnnotation {
+  glyph: '!' | '?' | '!!' | '??' | '!?' | '?!';
+  tone: MoveAnnotationTone;
+}
+
 export interface GameNode {
   id: string;
   san: string | null;
@@ -55,6 +62,7 @@ export interface GameNode {
   moveNumber: number | null;
   color: 'white' | 'black' | null;
   fen: string;
+  annotation: MoveAnnotation | null;
   comment: string | null;
   annotations: BoardAnnotation[];
   children: GameNode[];
@@ -74,6 +82,7 @@ export interface NotationMove {
   label: string;
   moveNumber: number;
   color: 'white' | 'black';
+  annotation: MoveAnnotation | null;
   comment: string | null;
 }
 
@@ -179,6 +188,7 @@ export function buildGameState(pgn: string): GameState {
     moveNumber: null,
     color: null,
     fen: makeFen(position.toSetup()),
+    annotation: null,
     ...parseNodeComments(game.comments),
     children: [],
     variations: [],
@@ -295,6 +305,7 @@ function buildNode(
     moveNumber: Math.floor(ply / 2) + 1,
     color: ply % 2 === 0 ? 'white' : 'black',
     fen: makeFen(nextPosition.toSetup()),
+    annotation: parseMoveAnnotation(pgnNode.data.nags),
     ...parseNodeComments([...(pgnNode.data.startingComments ?? []), ...(pgnNode.data.comments ?? [])]),
     children: [],
     variations: [],
@@ -378,7 +389,8 @@ export function moveLabel(node: GameNode): string {
     return '';
   }
 
-  return node.color === 'white' ? `${node.moveNumber}. ${node.san}` : `${node.moveNumber}... ${node.san}`;
+  const sanWithGlyph = `${node.san}${node.annotation?.glyph ?? ''}`;
+  return node.color === 'white' ? `${node.moveNumber}. ${sanWithGlyph}` : `${node.moveNumber}... ${sanWithGlyph}`;
 }
 
 export function lastMoveSquares(currentFen: string, previousFen: string | null): { from: string; to: string } | null {
@@ -484,6 +496,7 @@ function toNotationMove(node: GameNode): NotationMove {
     label: moveLabel(node),
     moveNumber: node.moveNumber ?? Math.floor(node.ply / 2) + 1,
     color: node.color ?? 'white',
+    annotation: node.annotation,
     comment: node.comment,
   };
 }
@@ -509,4 +522,31 @@ function flattenVariationMainline(root: GameNode): NotationMove[] {
 
 export function squareNameFromIndex(square: number): string {
   return makeSquare(square);
+}
+
+function parseMoveAnnotation(nags: number[] | undefined): MoveAnnotation | null {
+  if (!nags?.length) {
+    return null;
+  }
+
+  for (const nag of nags) {
+    switch (nag) {
+      case 1:
+        return { glyph: '!', tone: 'good' };
+      case 2:
+        return { glyph: '?', tone: 'mistake' };
+      case 3:
+        return { glyph: '!!', tone: 'brilliant' };
+      case 4:
+        return { glyph: '??', tone: 'blunder' };
+      case 5:
+        return { glyph: '!?', tone: 'interesting' };
+      case 6:
+        return { glyph: '?!', tone: 'dubious' };
+      default:
+        continue;
+    }
+  }
+
+  return null;
 }

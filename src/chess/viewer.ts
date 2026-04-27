@@ -374,8 +374,9 @@ export class ChessViewer {
   }
 
   private createMoveButton(hostEl: HTMLElement, move: NotationMove, cls: string): HTMLButtonElement {
+    const toneClass = move.annotation ? ` is-${move.annotation.tone}` : '';
     const button = hostEl.createEl('button', {
-      cls,
+      cls: `${cls}${toneClass}`,
       text: move.label,
     });
     button.toggleClass('is-active', this.state.currentNodeId === move.id);

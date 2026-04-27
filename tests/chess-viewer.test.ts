@@ -198,7 +198,9 @@ describe('ChessViewer', () => {
 
     const board = container.querySelector('.chess-pgn-viewer__board');
     const content = container.querySelector('.chess-pgn-viewer__content');
-    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+    const moveButtons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__notation-row .chess-pgn-viewer__move'),
+    );
 
     expect(board).not.toBeNull();
     expect(content).not.toBeNull();
@@ -280,6 +282,64 @@ describe('ChessViewer', () => {
     expect(rows).toHaveLength(2);
     expect(variation?.textContent).toContain('2. Bc4');
     expect(variation?.textContent).toContain('Bishop line');
+  });
+
+  it('renders colored move annotation glyphs in mainline and variations', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4! e5? 2. Nf3!! (2. Bc4!?) Nc6?? 3. Bb5!? a6?!');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const moveButtons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__notation-row .chess-pgn-viewer__move'),
+    );
+    const variationButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move--variation');
+
+    expect(moveButtons[0]?.textContent).toBe('1. e4!');
+    expect(moveButtons[0]?.className).toContain('is-good');
+    expect(moveButtons[1]?.textContent).toBe('1... e5?');
+    expect(moveButtons[1]?.className).toContain('is-mistake');
+    expect(moveButtons[2]?.textContent).toBe('2. Nf3!!');
+    expect(moveButtons[2]?.className).toContain('is-brilliant');
+    expect(moveButtons[3]?.textContent).toBe('2... Nc6??');
+    expect(moveButtons[3]?.className).toContain('is-blunder');
+    expect(moveButtons[4]?.textContent).toBe('3. Bb5!?');
+    expect(moveButtons[4]?.className).toContain('is-interesting');
+    expect(moveButtons[5]?.textContent).toBe('3... a6?!');
+    expect(moveButtons[5]?.className).toContain('is-dubious');
+    expect(variationButton?.textContent).toBe('2. Bc4!?');
+    expect(variationButton?.className).toContain('is-interesting');
+  });
+
+  it('keeps the active move highlight on annotated moves', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4! e5 2. Nf3 Nc6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move')?.click();
+
+    const activeMove = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move.is-active');
+    expect(activeMove?.textContent).toBe('1. e4!');
+    expect(activeMove?.classList.contains('is-good')).toBe(true);
   });
 
   it('preserves notation scroll position when navigating between moves', () => {

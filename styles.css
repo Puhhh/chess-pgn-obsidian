@@ -318,6 +318,30 @@
   white-space: nowrap;
 }
 
+.chess-pgn-viewer__move.is-good:not(.is-active) {
+  color: #5ea33d;
+}
+
+.chess-pgn-viewer__move.is-brilliant:not(.is-active) {
+  color: #3e7f20;
+}
+
+.chess-pgn-viewer__move.is-mistake:not(.is-active) {
+  color: #d3872f;
+}
+
+.chess-pgn-viewer__move.is-blunder:not(.is-active) {
+  color: #d05757;
+}
+
+.chess-pgn-viewer__move.is-interesting:not(.is-active) {
+  color: #8d68cc;
+}
+
+.chess-pgn-viewer__move.is-dubious:not(.is-active) {
+  color: #5da1da;
+}
+
 .chess-pgn-viewer__move.is-active {
   background: var(--chess-active);
   color: white;

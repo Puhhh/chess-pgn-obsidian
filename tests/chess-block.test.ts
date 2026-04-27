@@ -113,6 +113,49 @@ describe('buildGameState', () => {
     });
   });
 
+  it('parses move annotation glyphs into structured notation metadata', () => {
+    const state = buildGameState('1. e4! e5? 2. Nf3!! Nc6?? 3. Bb5!? a6?!');
+    const rows = buildNotationRows(state.root);
+
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toMatchObject({
+      white: {
+        san: 'e4',
+        label: '1. e4!',
+        annotation: { glyph: '!', tone: 'good' },
+      },
+      black: {
+        san: 'e5',
+        label: '1... e5?',
+        annotation: { glyph: '?', tone: 'mistake' },
+      },
+    });
+    expect(rows[1]).toMatchObject({
+      white: {
+        san: 'Nf3',
+        label: '2. Nf3!!',
+        annotation: { glyph: '!!', tone: 'brilliant' },
+      },
+      black: {
+        san: 'Nc6',
+        label: '2... Nc6??',
+        annotation: { glyph: '??', tone: 'blunder' },
+      },
+    });
+    expect(rows[2]).toMatchObject({
+      white: {
+        san: 'Bb5',
+        label: '3. Bb5!?',
+        annotation: { glyph: '!?', tone: 'interesting' },
+      },
+      black: {
+        san: 'a6',
+        label: '3... a6?!',
+        annotation: { glyph: '?!', tone: 'dubious' },
+      },
+    });
+  });
+
   it('throws a helpful error for invalid pgn', () => {
     expect(() => buildGameState('1. e4 ???')).toThrow(/invalid pgn/i);
   });
