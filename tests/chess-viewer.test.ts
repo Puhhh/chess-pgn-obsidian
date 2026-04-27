@@ -169,6 +169,10 @@ describe('ChessViewer', () => {
     expect(styles).not.toContain('white-space: nowrap');
     expect(styles).toContain('.chess-pgn-viewer__move-text');
     expect(styles).toContain('overflow-wrap: anywhere');
+    expect(styles).toContain('appearance: none');
+    expect(styles).toContain('.chess-pgn-viewer__move-cell .chess-pgn-viewer__move');
+    expect(styles).toContain('inline-size: 100%');
+    expect(styles).toContain('.chess-pgn-viewer__variation-line .chess-pgn-viewer__move');
   });
 
   it('quantizes the board side to an exact 8-cell grid and reports equal square metrics', () => {

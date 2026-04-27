@@ -306,28 +306,39 @@
 }
 
 .chess-pgn-viewer__move-cell {
+  display: flex;
   min-width: 0;
 }
 
 .chess-pgn-viewer__move {
+  appearance: none;
   background: transparent;
   border: 0;
   border-radius: 999px;
+  box-shadow: none;
   color: var(--chess-text-strong);
   cursor: pointer;
   display: inline-block;
   font-size: 0.92rem;
   font-weight: 600;
+  line-height: 1.25;
   max-width: 100%;
+  min-inline-size: 0;
+  overflow: visible;
   padding: 0;
   text-align: left;
   white-space: normal;
   word-break: normal;
 }
 
+.chess-pgn-viewer__move-cell .chess-pgn-viewer__move {
+  display: block;
+  inline-size: 100%;
+}
+
 .chess-pgn-viewer__move-text {
   border-radius: inherit;
-  display: inline;
+  display: block;
   max-width: 100%;
   overflow: visible;
   overflow-wrap: anywhere;
@@ -373,6 +384,12 @@
   font-size: 0.86rem;
   padding: 0;
   white-space: normal;
+}
+
+.chess-pgn-viewer__variation-line .chess-pgn-viewer__move {
+  display: inline-flex;
+  inline-size: auto;
+  max-inline-size: 100%;
 }
 
 .chess-pgn-viewer__move-placeholder {
