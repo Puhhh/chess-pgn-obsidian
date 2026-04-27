@@ -454,6 +454,58 @@ describe('ChessViewer', () => {
     expect(activeMove?.classList.contains('is-good')).toBe(true);
   });
 
+  it('stops next navigation at the end of the mainline', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+    const getNextButton = () => container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__control')[2];
+
+    moveButtons[0]?.click();
+    getNextButton()?.click();
+    getNextButton()?.click();
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1... e5');
+    expect(getNextButton()?.disabled).toBe(true);
+  });
+
+  it('stops next navigation at the end of a variation', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 (2. Bc4 Bc5) Nc6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const variationButton = container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move--variation')[1];
+    const getNextButton = () => container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__control')[2];
+
+    variationButton?.click();
+    getNextButton()?.click();
+    getNextButton()?.click();
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('2... Bc5');
+    expect(getNextButton()?.disabled).toBe(true);
+  });
+
   it('preserves notation scroll position when navigating between moves', () => {
     installObsidianDomHelpers();
     installResizeObserver();

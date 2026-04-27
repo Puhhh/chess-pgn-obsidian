@@ -257,7 +257,10 @@ export class ChessViewer {
   private renderControlState(): void {
     const path = nodePath(this.gameState.root, this.state.currentNodeId);
     const canGoBack = path.length > 1;
-    const canGoForward = Boolean(this.currentNode()?.children[0] ?? this.gameState.root.children[0]);
+    const currentNode = this.currentNode();
+    const canGoForward = Boolean(
+      currentNode?.children[0] ?? (this.state.currentNodeId === 'root' ? this.gameState.root.children[0] : null),
+    );
 
     this.prevButton.disabled = !canGoBack;
     this.resetButton.disabled = this.state.currentNodeId === 'root';
@@ -438,7 +441,8 @@ export class ChessViewer {
 
   private goNext(): void {
     const currentNode = this.currentNode();
-    const nextId = currentNode?.children[0]?.id ?? this.gameState.root.children[0]?.id;
+    const nextId =
+      currentNode?.children[0]?.id ?? (this.state.currentNodeId === 'root' ? this.gameState.root.children[0]?.id : null);
     if (!nextId) {
       return;
     }
