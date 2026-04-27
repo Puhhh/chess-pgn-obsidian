@@ -265,6 +265,8 @@ export class ChessViewer {
   }
 
   private renderNotation(): void {
+    const scrollTop = this.notationPanelEl.scrollTop;
+    const scrollLeft = this.notationPanelEl.scrollLeft;
     this.notationPanelEl.empty();
 
     const headerEntries = Object.entries(this.gameState.headers);
@@ -287,6 +289,32 @@ export class ChessViewer {
     const movesEl = this.notationPanelEl.createDiv({ cls: 'chess-pgn-viewer__moves' });
     for (const row of buildNotationRows(this.gameState.root)) {
       this.renderNotationRow(movesEl, row);
+    }
+
+    this.notationPanelEl.scrollTop = scrollTop;
+    this.notationPanelEl.scrollLeft = scrollLeft;
+    this.syncActiveMoveVisibility();
+  }
+
+  private syncActiveMoveVisibility(): void {
+    const activeMove = this.notationPanelEl.querySelector<HTMLElement>('.chess-pgn-viewer__move.is-active');
+    if (!activeMove) {
+      return;
+    }
+
+    const padding = 12;
+    const panelRect = this.notationPanelEl.getBoundingClientRect();
+    const moveRect = activeMove.getBoundingClientRect();
+    const visibleTop = panelRect.top + padding;
+    const visibleBottom = panelRect.bottom - padding;
+
+    if (moveRect.top < visibleTop) {
+      this.notationPanelEl.scrollTop += moveRect.top - visibleTop;
+      return;
+    }
+
+    if (moveRect.bottom > visibleBottom) {
+      this.notationPanelEl.scrollTop += moveRect.bottom - visibleBottom;
     }
   }
 

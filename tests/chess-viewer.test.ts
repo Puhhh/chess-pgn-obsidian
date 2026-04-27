@@ -114,6 +114,50 @@ function installResizeObserver(): void {
   });
 }
 
+interface RectSpec {
+  top: number;
+  bottom: number;
+  left?: number;
+  right?: number;
+}
+
+function installNotationRectHarness(
+  activeRect: RectSpec,
+  panelRect: RectSpec = { top: 100, bottom: 220, left: 0, right: 320 },
+): () => void {
+  const original = HTMLElement.prototype.getBoundingClientRect;
+
+  HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRect(): DOMRect {
+    if (this.classList.contains('chess-pgn-viewer__notation-panel')) {
+      return rectFromSpec(panelRect);
+    }
+
+    if (this.classList.contains('chess-pgn-viewer__move') && this.classList.contains('is-active')) {
+      return rectFromSpec(activeRect);
+    }
+
+    return original.call(this);
+  };
+
+  return () => {
+    HTMLElement.prototype.getBoundingClientRect = original;
+  };
+}
+
+function rectFromSpec({ top, bottom, left = 0, right = 0 }: RectSpec): DOMRect {
+  return {
+    top,
+    bottom,
+    left,
+    right,
+    width: right - left,
+    height: bottom - top,
+    x: left,
+    y: top,
+    toJSON: () => ({}),
+  } as DOMRect;
+}
+
 describe('ChessViewer', () => {
   it('quantizes the board side to an exact 8-cell grid and reports equal square metrics', () => {
     expect(quantizeBoardSide(423)).toBe(416);
@@ -236,6 +280,186 @@ describe('ChessViewer', () => {
     expect(rows).toHaveLength(2);
     expect(variation?.textContent).toContain('2. Bc4');
     expect(variation?.textContent).toContain('Bishop line');
+  });
+
+  it('preserves notation scroll position when navigating between moves', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+    const restoreRects = installNotationRectHarness({ top: 130, bottom: 170 });
+
+    const gameState = buildGameState(`[Event "Annotated"]
+1. e4 {First comment}
+e5
+2. Nf3 {Second comment}
+Nc6
+3. Bb5 {Third comment}
+a6
+4. Ba4 {Fourth comment}
+Nf6
+5. O-O {Fifth comment}
+Be7
+6. Re1 {Sixth comment}
+b5`);
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const notationPanel = container.querySelector<HTMLElement>('.chess-pgn-viewer__notation-panel');
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+
+    expect(notationPanel).not.toBeNull();
+
+    if (!notationPanel || moveButtons.length < 4) {
+      throw new Error('Expected notation panel and move buttons to exist');
+    }
+
+    const originalEmpty = notationPanel.empty?.bind(notationPanel);
+    notationPanel.empty = function emptyWithScrollReset() {
+      originalEmpty?.();
+      this.scrollTop = 0;
+    };
+
+    notationPanel.scrollTop = 180;
+    moveButtons[3]?.click();
+
+    expect(notationPanel.scrollTop).toBe(180);
+    restoreRects();
+  });
+
+  it('scrolls the notation panel down when the active move falls below the viewport', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const restoreRects = installNotationRectHarness({ top: 260, bottom: 290 });
+    const gameState = buildGameState('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const notationPanel = container.querySelector<HTMLElement>('.chess-pgn-viewer__notation-panel');
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+
+    if (!notationPanel || moveButtons.length < 4) {
+      restoreRects();
+      throw new Error('Expected notation panel and move buttons to exist');
+    }
+
+    notationPanel.scrollTop = 180;
+    moveButtons[3]?.click();
+
+    expect(notationPanel.scrollTop).toBe(262);
+    restoreRects();
+  });
+
+  it('scrolls the notation panel up when the active move falls above the viewport', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const activeRect = { top: 130, bottom: 170 };
+    const restoreRects = installNotationRectHarness(activeRect);
+    const gameState = buildGameState('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const notationPanel = container.querySelector<HTMLElement>('.chess-pgn-viewer__notation-panel');
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+
+    if (!notationPanel || moveButtons.length < 4) {
+      restoreRects();
+      throw new Error('Expected notation panel and move buttons to exist');
+    }
+
+    notationPanel.scrollTop = 180;
+    moveButtons[3]?.click();
+    activeRect.top = 90;
+    activeRect.bottom = 120;
+    moveButtons[0]?.click();
+
+    expect(notationPanel.scrollTop).toBe(158);
+    restoreRects();
+  });
+
+  it('keeps notation scroll stable when the active move is already visible', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const restoreRects = installNotationRectHarness({ top: 130, bottom: 170 });
+    const gameState = buildGameState('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const notationPanel = container.querySelector<HTMLElement>('.chess-pgn-viewer__notation-panel');
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+
+    if (!notationPanel || moveButtons.length < 2) {
+      restoreRects();
+      throw new Error('Expected notation panel and move buttons to exist');
+    }
+
+    notationPanel.scrollTop = 180;
+    moveButtons[1]?.click();
+
+    expect(notationPanel.scrollTop).toBe(180);
+    restoreRects();
+  });
+
+  it('auto-scrolls to active variation moves with the same visibility rules', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const restoreRects = installNotationRectHarness({ top: 250, bottom: 286 });
+    const gameState = buildGameState('1. e4 e5 2. Nf3 (2. Bc4 Bc5) Nc6 3. Bb5 a6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const notationPanel = container.querySelector<HTMLElement>('.chess-pgn-viewer__notation-panel');
+    const variationButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move--variation'),
+    )[0];
+
+    if (!notationPanel || !variationButton) {
+      restoreRects();
+      throw new Error('Expected notation panel and variation move button to exist');
+    }
+
+    notationPanel.scrollTop = 180;
+    variationButton.click();
+
+    expect(notationPanel.scrollTop).toBe(258);
+    restoreRects();
   });
 });
 
