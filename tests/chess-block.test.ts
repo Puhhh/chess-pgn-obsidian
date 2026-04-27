@@ -51,6 +51,34 @@ describe('buildGameState', () => {
     expect(state.currentNodeId).toBe('root');
   });
 
+  it('extracts board annotations from PGN comments and removes raw tags from visible text', () => {
+    const source = `[Event "Annotated"]
+1. e4 {Bridge idea [%csl Ge4][%cal Ge2e4,Gd1h5]} e5`;
+
+    const state = buildGameState(source);
+    const firstMove = state.root.children[0];
+
+    expect(firstMove?.comment).toBe('Bridge idea');
+    expect(firstMove?.annotations).toHaveLength(3);
+    expect(firstMove?.annotations[0]).toMatchObject({
+      kind: 'highlight',
+      color: 'green',
+      square: 'e4',
+    });
+    expect(firstMove?.annotations[1]).toMatchObject({
+      kind: 'arrow',
+      color: 'green',
+      from: 'e2',
+      to: 'e4',
+    });
+    expect(firstMove?.annotations[2]).toMatchObject({
+      kind: 'arrow',
+      color: 'green',
+      from: 'd1',
+      to: 'h5',
+    });
+  });
+
   it('throws a helpful error for invalid pgn', () => {
     expect(() => buildGameState('1. e4 ???')).toThrow(/invalid pgn/i);
   });

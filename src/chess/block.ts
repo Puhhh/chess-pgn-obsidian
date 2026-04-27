@@ -2,9 +2,11 @@ import { makeFen } from 'chessops/fen';
 import type { Position } from 'chessops/chess';
 import {
   type ChildNode,
+  type CommentShapeColor,
   type Game,
   type PgnNodeData,
   parsePgn,
+  parseComment,
   startingPosition,
 } from 'chessops/pgn';
 import { parseSan } from 'chessops/san';
@@ -31,6 +33,21 @@ export interface BoardPiece {
   role: 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king';
 }
 
+export type AnnotationColor = CommentShapeColor;
+
+export type BoardAnnotation =
+  | {
+      kind: 'highlight';
+      color: AnnotationColor;
+      square: string;
+    }
+  | {
+      kind: 'arrow';
+      color: AnnotationColor;
+      from: string;
+      to: string;
+    };
+
 export interface GameNode {
   id: string;
   san: string | null;
@@ -39,6 +56,7 @@ export interface GameNode {
   color: 'white' | 'black' | null;
   fen: string;
   comment: string | null;
+  annotations: BoardAnnotation[];
   children: GameNode[];
   variations: GameNode[];
 }
@@ -140,7 +158,7 @@ export function buildGameState(pgn: string): GameState {
     moveNumber: null,
     color: null,
     fen: makeFen(position.toSetup()),
-    comment: joinComments(game.comments),
+    ...parseNodeComments(game.comments),
     children: [],
     variations: [],
   };
@@ -256,7 +274,7 @@ function buildNode(
     moveNumber: Math.floor(ply / 2) + 1,
     color: ply % 2 === 0 ? 'white' : 'black',
     fen: makeFen(nextPosition.toSetup()),
-    comment: joinComments([...(pgnNode.data.startingComments ?? []), ...(pgnNode.data.comments ?? [])]),
+    ...parseNodeComments([...(pgnNode.data.startingComments ?? []), ...(pgnNode.data.comments ?? [])]),
     children: [],
     variations: [],
   };
@@ -274,13 +292,45 @@ function buildNode(
   return node;
 }
 
-function joinComments(comments: string[] | undefined): string | null {
+function parseNodeComments(comments: string[] | undefined): Pick<GameNode, 'comment' | 'annotations'> {
   if (!comments || comments.length === 0) {
-    return null;
+    return {
+      comment: null,
+      annotations: [],
+    };
   }
 
-  const normalized = comments.map(comment => comment.trim()).filter(Boolean);
-  return normalized.length ? normalized.join('\n\n') : null;
+  const textParts: string[] = [];
+  const annotations: BoardAnnotation[] = [];
+
+  for (const rawComment of comments) {
+    const parsed = parseComment(rawComment);
+    if (parsed.text.trim()) {
+      textParts.push(parsed.text.trim());
+    }
+
+    for (const shape of parsed.shapes) {
+      if (shape.from === shape.to) {
+        annotations.push({
+          kind: 'highlight',
+          color: shape.color,
+          square: makeSquare(shape.from),
+        });
+      } else {
+        annotations.push({
+          kind: 'arrow',
+          color: shape.color,
+          from: makeSquare(shape.from),
+          to: makeSquare(shape.to),
+        });
+      }
+    }
+  }
+
+  return {
+    comment: textParts.length ? textParts.join('\n\n') : null,
+    annotations,
+  };
 }
 
 function toRole(symbol: string): BoardPiece['role'] | null {
