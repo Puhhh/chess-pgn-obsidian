@@ -27,9 +27,23 @@ interface ViewerState {
   currentNodeId: string;
 }
 
+interface SquareParts {
+  element: HTMLDivElement;
+  piece: HTMLSpanElement;
+}
+
 export class ChessViewer {
   private readonly state: ViewerState;
-  private readonly rootEl: HTMLElement;
+  private readonly rootEl: HTMLDivElement;
+  private readonly contentEl: HTMLDivElement;
+  private readonly boardPanelEl: HTMLDivElement;
+  private readonly boardEl: HTMLDivElement;
+  private readonly controlsEl: HTMLDivElement;
+  private readonly notationPanelEl: HTMLDivElement;
+  private readonly prevButton: HTMLButtonElement;
+  private readonly resetButton: HTMLButtonElement;
+  private readonly nextButton: HTMLButtonElement;
+  private readonly squares = new Map<string, SquareParts>();
 
   constructor(
     private readonly containerEl: HTMLElement,
@@ -38,42 +52,46 @@ export class ChessViewer {
   ) {
     this.state = { currentNodeId: gameState.currentNodeId };
     this.rootEl = containerEl.createDiv({ cls: 'chess-pgn-viewer' });
+    this.rootEl.toggleClass('is-orientation-black', this.options.orientation === 'black');
+
+    this.contentEl = this.rootEl.createDiv({ cls: 'chess-pgn-viewer__content' });
+    this.boardPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__board-panel' });
+    this.boardEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__board' });
+    this.controlsEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
+    this.notationPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
+
+    this.buildBoardShell();
+    this.prevButton = this.createControlButton('←', () => this.goPrevious());
+    this.resetButton = this.createControlButton('•', () => {
+      this.state.currentNodeId = 'root';
+      this.render();
+    });
+    this.nextButton = this.createControlButton('→', () => this.goNext());
+
     this.render();
   }
 
   private render(): void {
-    this.rootEl.empty();
     this.rootEl.toggleClass('is-orientation-black', this.options.orientation === 'black');
-
-    const contentEl = this.rootEl.createDiv({ cls: 'chess-pgn-viewer__content' });
-    const boardPanelEl = contentEl.createDiv({ cls: 'chess-pgn-viewer__board-panel' });
-    const notationPanelEl = contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
-
-    this.renderBoard(boardPanelEl);
-    this.renderControls(boardPanelEl);
-    this.renderNotation(notationPanelEl);
+    this.renderBoardState();
+    this.renderControlState();
+    this.renderNotation();
   }
 
-  private renderBoard(hostEl: HTMLElement): void {
-    const currentNode = this.currentNode();
-    const currentFen = currentNode?.fen ?? this.gameState.root.fen;
-    const previousFen = this.parentNode(currentNode?.id ?? null)?.fen ?? null;
-    const highlightedMove = lastMoveSquares(currentFen, previousFen);
-    const pieces = boardPiecesFromFen(currentFen);
-    const pieceMap = new Map(pieces.map(piece => [piece.square, piece]));
-
-    const boardEl = hostEl.createDiv({ cls: 'chess-pgn-viewer__board' });
-    const files = this.options.orientation === 'white' ? ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] : ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'];
-    const ranks = this.options.orientation === 'white' ? [8, 7, 6, 5, 4, 3, 2, 1] : [1, 2, 3, 4, 5, 6, 7, 8];
+  private buildBoardShell(): void {
+    const files = this.options.orientation === 'white'
+      ? ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+      : ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'];
+    const ranks = this.options.orientation === 'white'
+      ? [8, 7, 6, 5, 4, 3, 2, 1]
+      : [1, 2, 3, 4, 5, 6, 7, 8];
 
     for (const rank of ranks) {
       for (const file of files) {
         const square = `${file}${rank}`;
-        const squareEl = boardEl.createDiv({ cls: 'chess-pgn-viewer__square' });
+        const squareEl = this.boardEl.createDiv({ cls: 'chess-pgn-viewer__square' });
         squareEl.toggleClass('is-light', (file.charCodeAt(0) - 97 + rank) % 2 === 1);
         squareEl.toggleClass('is-dark', !squareEl.hasClass('is-light'));
-        squareEl.toggleClass('is-from', highlightedMove?.from === square);
-        squareEl.toggleClass('is-to', highlightedMove?.to === square);
 
         if (rank === ranks[ranks.length - 1]) {
           squareEl.createSpan({ cls: 'chess-pgn-viewer__file-label', text: file });
@@ -82,52 +100,51 @@ export class ChessViewer {
           squareEl.createSpan({ cls: 'chess-pgn-viewer__rank-label', text: String(rank) });
         }
 
-        const piece = pieceMap.get(square);
-        if (piece) {
-          squareEl.createSpan({
-            cls: `chess-pgn-viewer__piece is-${piece.color}`,
-            text: PIECE_GLYPHS[`${piece.color}-${piece.role}`] ?? '',
-          });
-        }
+        const pieceEl = squareEl.createSpan({ cls: 'chess-pgn-viewer__piece' });
+        this.squares.set(square, { element: squareEl, piece: pieceEl });
       }
     }
   }
 
-  private renderControls(hostEl: HTMLElement): void {
-    const controlsEl = hostEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
+  private renderBoardState(): void {
+    const currentNode = this.currentNode();
+    const currentFen = currentNode?.fen ?? this.gameState.root.fen;
+    const previousFen = this.parentNode(currentNode?.id ?? null)?.fen ?? null;
+    const highlightedMove = lastMoveSquares(currentFen, previousFen);
+    const pieces = new Map(boardPiecesFromFen(currentFen).map(piece => [piece.square, piece]));
+
+    for (const [square, parts] of this.squares) {
+      const piece = pieces.get(square);
+
+      parts.element.toggleClass('is-from', highlightedMove?.from === square);
+      parts.element.toggleClass('is-to', highlightedMove?.to === square);
+
+      parts.piece.className = 'chess-pgn-viewer__piece';
+      parts.piece.textContent = '';
+
+      if (piece) {
+        parts.piece.classList.add(`is-${piece.color}`);
+        parts.piece.textContent = PIECE_GLYPHS[`${piece.color}-${piece.role}`] ?? '';
+      }
+    }
+  }
+
+  private renderControlState(): void {
     const path = nodePath(this.gameState.root, this.state.currentNodeId);
     const canGoBack = path.length > 1;
     const canGoForward = Boolean(this.currentNode()?.children[0] ?? this.gameState.root.children[0]);
 
-    const prevButton = controlsEl.createEl('button', {
-      cls: 'chess-pgn-viewer__control',
-      text: '←',
-    });
-    prevButton.disabled = !canGoBack;
-    prevButton.addEventListener('click', () => this.goPrevious());
-
-    const resetButton = controlsEl.createEl('button', {
-      cls: 'chess-pgn-viewer__control',
-      text: '•',
-    });
-    resetButton.disabled = this.state.currentNodeId === 'root';
-    resetButton.addEventListener('click', () => {
-      this.state.currentNodeId = 'root';
-      this.render();
-    });
-
-    const nextButton = controlsEl.createEl('button', {
-      cls: 'chess-pgn-viewer__control',
-      text: '→',
-    });
-    nextButton.disabled = !canGoForward;
-    nextButton.addEventListener('click', () => this.goNext());
+    this.prevButton.disabled = !canGoBack;
+    this.resetButton.disabled = this.state.currentNodeId === 'root';
+    this.nextButton.disabled = !canGoForward;
   }
 
-  private renderNotation(hostEl: HTMLElement): void {
+  private renderNotation(): void {
+    this.notationPanelEl.empty();
+
     const headerEntries = Object.entries(this.gameState.headers);
     if (headerEntries.length > 0) {
-      const metaEl = hostEl.createDiv({ cls: 'chess-pgn-viewer__meta' });
+      const metaEl = this.notationPanelEl.createDiv({ cls: 'chess-pgn-viewer__meta' });
       const title = this.gameState.headers.Event ?? 'Chess game';
       metaEl.createDiv({ cls: 'chess-pgn-viewer__title', text: title });
 
@@ -141,7 +158,7 @@ export class ChessViewer {
       return;
     }
 
-    const movesEl = hostEl.createDiv({ cls: 'chess-pgn-viewer__moves' });
+    const movesEl = this.notationPanelEl.createDiv({ cls: 'chess-pgn-viewer__moves' });
     for (const rootNode of this.gameState.root.children) {
       this.renderMoveBranch(movesEl, rootNode, 0);
     }
@@ -179,6 +196,15 @@ export class ChessViewer {
     for (const child of node.children) {
       this.renderMoveBranch(hostEl, child, depth);
     }
+  }
+
+  private createControlButton(label: string, onClick: () => void): HTMLButtonElement {
+    const button = this.controlsEl.createEl('button', {
+      cls: 'chess-pgn-viewer__control',
+      text: label,
+    });
+    button.addEventListener('click', onClick);
+    return button;
   }
 
   private currentNode(): GameNode | undefined {

@@ -19,14 +19,20 @@
 }
 
 .chess-pgn-viewer__content {
+  align-items: start;
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(260px, 420px) minmax(260px, 1fr);
+  grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
 }
 
 .chess-pgn-viewer__board-panel,
 .chess-pgn-viewer__notation-panel {
   min-width: 0;
+}
+
+.chess-pgn-viewer__board-panel {
+  justify-self: start;
+  width: min(100%, 420px);
 }
 
 .chess-pgn-viewer__board {
@@ -140,10 +146,16 @@
   margin-top: 0.15rem;
 }
 
+.chess-pgn-viewer__notation-panel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .chess-pgn-viewer__moves {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 .chess-pgn-viewer__line {
@@ -161,8 +173,10 @@
   cursor: pointer;
   font-size: 0.98rem;
   font-weight: 700;
+  max-width: 100%;
   padding: 0.1rem 0 0.1rem calc(var(--variation-depth, 0) * 1rem);
   text-align: left;
+  white-space: nowrap;
 }
 
 .chess-pgn-viewer__move.is-active {
@@ -185,6 +199,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-width: 0;
   width: 100%;
 }
 
@@ -194,6 +209,7 @@
   display: flex;
   gap: 0.2rem;
   margin-left: calc(var(--variation-depth, 0) * 1rem);
+  min-width: 0;
   padding-left: 0.4rem;
 }
 
