@@ -15,6 +15,7 @@
   --annotation-red: #e56f6f;
   --annotation-yellow: #d7b04d;
   --annotation-blue: #73a0f8;
+  --controls-height: 4rem;
   background: color-mix(in srgb, var(--background-primary) 84%, #161616);
   border: 1px solid var(--chess-panel-border);
   border-radius: 12px;
@@ -235,7 +236,7 @@
   cursor: pointer;
   font-size: 1.85rem;
   line-height: 1;
-  min-height: 4rem;
+  min-height: var(--controls-height);
 }
 
 .chess-pgn-viewer__control:first-child {
@@ -255,8 +256,10 @@
   background: var(--chess-shell);
   border: 1px solid var(--chess-panel-border);
   border-radius: 10px;
+  height: calc(var(--board-side, 0px) + var(--controls-height) + 2px);
   min-width: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .chess-pgn-viewer__meta {
@@ -398,6 +401,8 @@
   }
 
   .chess-pgn-viewer__notation-panel {
+    height: auto;
+    overflow: visible;
     width: 100%;
   }
 }

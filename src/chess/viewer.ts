@@ -407,6 +407,7 @@ export class ChessViewer {
     const side = quantizeBoardSide(availableWidth);
     this.state.geometry = computeBoardGeometry([...this.squares.keys()], side);
 
+    this.rootEl.style.setProperty('--board-side', `${side}px`);
     this.boardFrameEl.style.width = `${side}px`;
     this.boardFrameEl.style.height = `${side}px`;
     this.boardEl.style.setProperty('--board-side', `${side}px`);
