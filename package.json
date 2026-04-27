@@ -1,8 +1,7 @@
 {
   "name": "obsidian-chess-pgn",
   "version": "0.1.0",
-  "private": true,
-  "description": "Obsidian plugin for rendering interactive chess PGN blocks",
+"description": "Obsidian plugin for rendering interactive chess PGN blocks",
   "main": "main.js",
   "scripts": {
     "build": "node esbuild.config.mjs production",
