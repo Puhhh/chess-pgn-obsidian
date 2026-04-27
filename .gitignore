@@ -1,5 +1,8 @@
+# Folders
 node_modules/
-.DS_Store
-
+.obsidian/
 examples/
 error/
+
+# Files
+.DS_Store
