@@ -68,6 +68,27 @@ export interface GameState {
   nodeIndex: Map<string, GameNode>;
 }
 
+export interface NotationMove {
+  id: string;
+  san: string;
+  label: string;
+  moveNumber: number;
+  color: 'white' | 'black';
+  comment: string | null;
+}
+
+export interface NotationVariation {
+  anchorNodeId: string;
+  moves: NotationMove[];
+}
+
+export interface NotationRow {
+  moveNumber: number;
+  white: NotationMove | null;
+  black: NotationMove | null;
+  variations: NotationVariation[];
+}
+
 const DEFAULT_OPTIONS: ChessBlockOptions = {
   orientation: 'white',
   showMoves: true,
@@ -397,6 +418,41 @@ export function mainlineNodes(root: GameNode): GameNode[] {
   return nodes;
 }
 
+export function buildNotationRows(root: GameNode): NotationRow[] {
+  const mainline = mainlineNodes(root);
+  const rows: NotationRow[] = [];
+
+  for (let index = 0; index < mainline.length; ) {
+    const current = mainline[index];
+    if (!current) {
+      break;
+    }
+
+    if (current.color === 'white') {
+      const next = mainline[index + 1];
+      const black = next?.color === 'black' ? next : null;
+      rows.push({
+        moveNumber: current.moveNumber ?? Math.floor(current.ply / 2) + 1,
+        white: toNotationMove(current),
+        black: black ? toNotationMove(black) : null,
+        variations: [...collectVariationLines(current), ...(black ? collectVariationLines(black) : [])],
+      });
+      index += black ? 2 : 1;
+      continue;
+    }
+
+    rows.push({
+      moveNumber: current.moveNumber ?? Math.floor(current.ply / 2) + 1,
+      white: null,
+      black: toNotationMove(current),
+      variations: collectVariationLines(current),
+    });
+    index += 1;
+  }
+
+  return rows;
+}
+
 export function nodePath(root: GameNode, targetId: string): string[] {
   const path: string[] = [];
   if (collectNodePath(root, targetId, path)) {
@@ -419,6 +475,36 @@ function collectNodePath(node: GameNode, targetId: string, path: string[]): bool
 
   path.pop();
   return false;
+}
+
+function toNotationMove(node: GameNode): NotationMove {
+  return {
+    id: node.id,
+    san: node.san ?? '',
+    label: moveLabel(node),
+    moveNumber: node.moveNumber ?? Math.floor(node.ply / 2) + 1,
+    color: node.color ?? 'white',
+    comment: node.comment,
+  };
+}
+
+function collectVariationLines(node: GameNode): NotationVariation[] {
+  return node.variations.map(variation => ({
+    anchorNodeId: node.id,
+    moves: flattenVariationMainline(variation),
+  }));
+}
+
+function flattenVariationMainline(root: GameNode): NotationMove[] {
+  const moves: NotationMove[] = [];
+  let cursor: GameNode | undefined = root;
+
+  while (cursor) {
+    moves.push(toNotationMove(cursor));
+    cursor = cursor.children[0];
+  }
+
+  return moves;
 }
 
 export function squareNameFromIndex(square: number): string {

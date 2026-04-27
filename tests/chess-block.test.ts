@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildGameState, parseChessBlock } from '../src/chess/block';
+import {
+  buildGameState,
+  buildNotationRows,
+  parseChessBlock,
+} from '../src/chess/block';
 
 describe('parseChessBlock', () => {
   it('extracts options and raw pgn text from a chess block', () => {
@@ -76,6 +80,36 @@ describe('buildGameState', () => {
       color: 'green',
       from: 'd1',
       to: 'h5',
+    });
+  });
+
+  it('keeps visible comments separate while building move rows for mainline and variations', () => {
+    const source = `[Event "Study"]
+1. e4 {Center [%csl Ge4]} e5 2. Nf3 (2. Bc4 {Bishop line}) Nc6 3. Bb5 a6`;
+
+    const state = buildGameState(source);
+    const rows = buildNotationRows(state.root);
+
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toMatchObject({
+      moveNumber: 1,
+      white: { san: 'e4', comment: 'Center' },
+      black: { san: 'e5' },
+    });
+    expect(rows[1]).toMatchObject({
+      moveNumber: 2,
+      white: { san: 'Nf3' },
+      black: { san: 'Nc6' },
+    });
+    expect(rows[1]?.variations).toHaveLength(1);
+    expect(rows[1]?.variations[0]?.moves[0]).toMatchObject({
+      san: 'Bc4',
+      comment: 'Bishop line',
+    });
+    expect(rows[2]).toMatchObject({
+      moveNumber: 3,
+      white: { san: 'Bb5' },
+      black: { san: 'a6' },
     });
   });
 

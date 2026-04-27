@@ -3,7 +3,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildGameState } from '../src/chess/block';
-import { ChessViewer } from '../src/chess/viewer';
+import {
+  ChessViewer,
+  computeBoardGeometry,
+  quantizeBoardSide,
+} from '../src/chess/viewer';
 
 function installObsidianDomHelpers(): void {
   const proto = HTMLElement.prototype as HTMLElement & {
@@ -75,9 +79,64 @@ interface ElementOptions {
   text?: string;
 }
 
+class ResizeObserverMock {
+  static instances: ResizeObserverMock[] = [];
+
+  constructor(private readonly callback: ResizeObserverCallback) {
+    ResizeObserverMock.instances.push(this);
+  }
+
+  observe(target: Element): void {
+    const width = Number((target as HTMLElement).dataset.testWidth ?? 0);
+    this.callback(
+      [
+        {
+          target,
+          contentRect: {
+            width,
+            height: width,
+          } as DOMRectReadOnly,
+        } as ResizeObserverEntry,
+      ],
+      this as unknown as ResizeObserver,
+    );
+  }
+
+  disconnect(): void {}
+  unobserve(): void {}
+}
+
+function installResizeObserver(): void {
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    configurable: true,
+    writable: true,
+    value: ResizeObserverMock,
+  });
+}
+
 describe('ChessViewer', () => {
+  it('quantizes the board side to an exact 8-cell grid and reports equal square metrics', () => {
+    expect(quantizeBoardSide(423)).toBe(416);
+    expect(quantizeBoardSide(64)).toBe(64);
+    expect(quantizeBoardSide(7)).toBe(0);
+
+    const geometry = computeBoardGeometry(whiteOrientationSquareNames(), 416);
+
+    expect(geometry.side).toBe(416);
+    expect(geometry.squareSize).toBe(52);
+    expect(geometry.squares.e4).toEqual({
+      left: 208,
+      top: 208,
+      size: 52,
+      centerX: 234,
+      centerY: 234,
+    });
+    expect(geometry.squares.h1?.size).toBe(52);
+  });
+
   it('keeps the board shell stable when navigating between moves', () => {
     installObsidianDomHelpers();
+    installResizeObserver();
 
     const gameState = buildGameState(`[Event "Example"]
 [White "White"]
@@ -85,6 +144,7 @@ describe('ChessViewer', () => {
 1. e4 {King pawn opening} e5 2. Nf3 (2. Bc4 {Bishop opening}) Nc6 3. Bb5 a6`);
 
     const container = document.createElement('div');
+    container.dataset.testWidth = '423';
     new ChessViewer(container, gameState, {
       orientation: 'white',
       showMoves: true,
@@ -108,11 +168,13 @@ describe('ChessViewer', () => {
 
   it('renders board annotations visually and does not leak raw PGN tags into comments', () => {
     installObsidianDomHelpers();
+    installResizeObserver();
 
     const gameState = buildGameState(`[Event "Annotated"]
 1. e4 {Bridge idea [%csl Ge4][%cal Ge2e4,Gd1h5]} e5`);
 
     const container = document.createElement('div');
+    container.dataset.testWidth = '423';
     new ChessViewer(container, gameState, {
       orientation: 'white',
       showMoves: true,
@@ -123,7 +185,7 @@ describe('ChessViewer', () => {
     const firstMove = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move');
     firstMove?.click();
 
-    const comment = container.querySelector('.chess-pgn-viewer__comment');
+    const comment = container.querySelector('.chess-pgn-viewer__notation-comment');
     const highlights = container.querySelectorAll('.chess-pgn-viewer__annotation--highlight');
     const arrows = container.querySelectorAll('.chess-pgn-viewer__annotation--arrow');
 
@@ -133,4 +195,56 @@ describe('ChessViewer', () => {
     expect(highlights).toHaveLength(1);
     expect(arrows).toHaveLength(2);
   });
+
+  it('sizes arrow SVG from measured board geometry and renders study-style move rows', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState(`[Event "Annotated"]
+[White "White"]
+[Black "Black"]
+1. e4 {Bridge idea [%csl Ge4][%cal Ge2e4,Gd1h5]} e5 2. Nf3 (2. Bc4 {Bishop line}) Nc6`);
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move')?.click();
+
+    const boardFrame = container.querySelector<HTMLElement>('.chess-pgn-viewer__board-frame');
+    const ring = container.querySelector<HTMLElement>('.chess-pgn-viewer__annotation--highlight');
+    const arrow = container.querySelector<SVGLineElement>('.chess-pgn-viewer__annotation--arrow');
+    const marker = container.querySelector<SVGMarkerElement>('marker');
+    const rows = container.querySelectorAll('.chess-pgn-viewer__notation-row');
+    const variation = container.querySelector('.chess-pgn-viewer__variation-line');
+
+    expect(boardFrame?.style.width).toBe('416px');
+    expect(boardFrame?.style.height).toBe('416px');
+    expect(ring?.style.left).toBe('208px');
+    expect(ring?.style.top).toBe('208px');
+    expect(arrow?.getAttribute('x1')).toBe('234');
+    expect(arrow?.getAttribute('y1')).toBe('338');
+    expect(arrow?.getAttribute('x2')).toBe('234');
+    expect(arrow?.getAttribute('y2')).toBe('234');
+    expect(arrow?.getAttribute('stroke-width')).toBe('8');
+    expect(marker?.getAttribute('markerUnits')).toBe('userSpaceOnUse');
+    expect(rows).toHaveLength(2);
+    expect(variation?.textContent).toContain('2. Bc4');
+    expect(variation?.textContent).toContain('Bishop line');
+  });
 });
+
+function whiteOrientationSquareNames(): string[] {
+  const result: string[] = [];
+  for (const rank of [8, 7, 6, 5, 4, 3, 2, 1]) {
+    for (const file of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
+      result.push(`${file}${rank}`);
+    }
+  }
+  return result;
+}
