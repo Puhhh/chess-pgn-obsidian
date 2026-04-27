@@ -269,17 +269,22 @@ export class ChessViewer {
     const scrollLeft = this.notationPanelEl.scrollLeft;
     this.notationPanelEl.empty();
 
-    const headerEntries = Object.entries(this.gameState.headers);
-    if (headerEntries.length > 0) {
-      const metaEl = this.notationPanelEl.createDiv({ cls: 'chess-pgn-viewer__meta' });
-      const title = this.gameState.headers.Event ?? 'Chess study';
-      metaEl.createDiv({ cls: 'chess-pgn-viewer__title', text: title });
+    const title = this.displayHeaderValue(this.gameState.headers.Event);
+    const players = [this.displayHeaderValue(this.gameState.headers.White), this.displayHeaderValue(this.gameState.headers.Black)]
+      .filter((value): value is string => Boolean(value));
 
-      const summaryParts = [this.gameState.headers.White, this.gameState.headers.Black].filter(Boolean);
-      metaEl.createDiv({
-        cls: 'chess-pgn-viewer__summary',
-        text: summaryParts.length > 0 ? summaryParts.join(' vs ') : '? vs ?',
-      });
+    if (title || players.length > 0) {
+      const metaEl = this.notationPanelEl.createDiv({ cls: 'chess-pgn-viewer__meta' });
+      if (title) {
+        metaEl.createDiv({ cls: 'chess-pgn-viewer__title', text: title });
+      }
+
+      if (players.length > 0) {
+        metaEl.createDiv({
+          cls: 'chess-pgn-viewer__summary',
+          text: players.join(' vs '),
+        });
+      }
     }
 
     if (!this.options.showMoves) {
@@ -294,6 +299,15 @@ export class ChessViewer {
     this.notationPanelEl.scrollTop = scrollTop;
     this.notationPanelEl.scrollLeft = scrollLeft;
     this.syncActiveMoveVisibility();
+  }
+
+  private displayHeaderValue(value: string | undefined): string | null {
+    const normalized = value?.trim();
+    if (!normalized || normalized === '?') {
+      return null;
+    }
+
+    return normalized;
   }
 
   private syncActiveMoveVisibility(): void {

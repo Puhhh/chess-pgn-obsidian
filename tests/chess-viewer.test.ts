@@ -320,6 +320,61 @@ describe('ChessViewer', () => {
     expect(variationButton?.className).toContain('is-interesting');
   });
 
+  it('omits placeholder header metadata when event and players are missing from PGN', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 Nc6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    expect(container.querySelector('.chess-pgn-viewer__title')).toBeNull();
+    expect(container.querySelector('.chess-pgn-viewer__summary')).toBeNull();
+    expect(container.textContent).not.toContain('?');
+  });
+
+  it('renders only real header values when event or one player is provided', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const eventOnlyState = buildGameState(`[Event "Training Session"]
+1. e4 e5`);
+    const eventOnlyContainer = document.createElement('div');
+    eventOnlyContainer.dataset.testWidth = '423';
+    new ChessViewer(eventOnlyContainer, eventOnlyState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    expect(eventOnlyContainer.querySelector('.chess-pgn-viewer__title')?.textContent).toBe('Training Session');
+    expect(eventOnlyContainer.querySelector('.chess-pgn-viewer__summary')).toBeNull();
+    expect(eventOnlyContainer.textContent).not.toContain('?');
+
+    const whiteOnlyState = buildGameState(`[White "Kasparov"]
+1. e4 e5`);
+    const whiteOnlyContainer = document.createElement('div');
+    whiteOnlyContainer.dataset.testWidth = '423';
+    new ChessViewer(whiteOnlyContainer, whiteOnlyState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    expect(whiteOnlyContainer.querySelector('.chess-pgn-viewer__title')).toBeNull();
+    expect(whiteOnlyContainer.querySelector('.chess-pgn-viewer__summary')?.textContent).toBe('Kasparov');
+    expect(whiteOnlyContainer.textContent).not.toContain('?');
+  });
+
   it('keeps the active move highlight on annotated moves', () => {
     installObsidianDomHelpers();
     installResizeObserver();
