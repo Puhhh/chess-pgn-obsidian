@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { buildGameState } from '../src/chess/block';
@@ -159,6 +162,15 @@ function rectFromSpec({ top, bottom, left = 0, right = 0 }: RectSpec): DOMRect {
 }
 
 describe('ChessViewer', () => {
+  it('does not truncate notation text in the stylesheet', () => {
+    const styles = readFileSync(path.join(process.cwd(), 'styles.css'), 'utf8');
+
+    expect(styles).not.toContain('text-overflow: ellipsis');
+    expect(styles).not.toContain('white-space: nowrap');
+    expect(styles).toContain('.chess-pgn-viewer__move-text');
+    expect(styles).toContain('overflow-wrap: anywhere');
+  });
+
   it('quantizes the board side to an exact 8-cell grid and reports equal square metrics', () => {
     expect(quantizeBoardSide(423)).toBe(416);
     expect(quantizeBoardSide(64)).toBe(64);

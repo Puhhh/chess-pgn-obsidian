@@ -289,7 +289,7 @@
 }
 
 .chess-pgn-viewer__notation-row {
-  align-items: center;
+  align-items: start;
   background: color-mix(in srgb, var(--chess-shell-strong) 78%, transparent);
   display: grid;
   gap: 0.55rem;
@@ -315,23 +315,25 @@
   border-radius: 999px;
   color: var(--chess-text-strong);
   cursor: pointer;
-  display: inline-flex;
+  display: inline-block;
   font-size: 0.92rem;
   font-weight: 600;
   max-width: 100%;
   padding: 0;
   text-align: left;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: normal;
 }
 
 .chess-pgn-viewer__move-text {
   border-radius: inherit;
-  display: inline-block;
+  display: inline;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
+  overflow-wrap: anywhere;
   padding: 0.18rem 0.32rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .chess-pgn-viewer__move.is-good:not(.is-active) {
@@ -370,6 +372,7 @@
   color: color-mix(in srgb, var(--chess-text-strong) 88%, white);
   font-size: 0.86rem;
   padding: 0;
+  white-space: normal;
 }
 
 .chess-pgn-viewer__move-placeholder {
@@ -401,6 +404,7 @@
   flex-wrap: wrap;
   gap: 0.12rem;
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .chess-pgn-viewer__variation-bracket,
@@ -412,6 +416,8 @@
   color: var(--chess-text-muted);
   font-size: 0.8rem;
   margin-left: 0.18rem;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .chess-pgn-viewer__error {
