@@ -1,0 +1,228 @@
+.chess-pgn-viewer-root {
+  margin: 1rem 0;
+}
+
+.chess-pgn-viewer {
+  --chess-board-light: color-mix(in srgb, var(--background-primary) 10%, #eed7ac);
+  --chess-board-dark: color-mix(in srgb, var(--interactive-accent) 15%, #b98d62);
+  --chess-panel-bg: color-mix(in srgb, var(--background-secondary) 92%, black);
+  --chess-panel-border: color-mix(in srgb, var(--background-modifier-border) 70%, white);
+  --chess-comment-bg: color-mix(in srgb, var(--background-modifier-hover) 80%, transparent);
+  --chess-active: var(--interactive-accent);
+  --chess-accent-soft: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+  --chess-text-strong: var(--text-normal);
+  --chess-text-muted: var(--text-muted);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--background-secondary) 90%, black), var(--background-primary));
+  border: 1px solid var(--chess-panel-border);
+  border-radius: 18px;
+  padding: 1rem;
+}
+
+.chess-pgn-viewer__content {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(260px, 420px) minmax(260px, 1fr);
+}
+
+.chess-pgn-viewer__board-panel,
+.chess-pgn-viewer__notation-panel {
+  min-width: 0;
+}
+
+.chess-pgn-viewer__board {
+  aspect-ratio: 1;
+  border: 1px solid var(--chess-panel-border);
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  overflow: hidden;
+}
+
+.chess-pgn-viewer__square {
+  position: relative;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.chess-pgn-viewer__square.is-light {
+  background: var(--chess-board-light);
+}
+
+.chess-pgn-viewer__square.is-dark {
+  background: var(--chess-board-dark);
+}
+
+.chess-pgn-viewer__square.is-from {
+  box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--interactive-accent) 55%, transparent);
+}
+
+.chess-pgn-viewer__square.is-to::after {
+  background: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+  border-radius: 999px;
+  content: '';
+  height: 32%;
+  position: absolute;
+  width: 32%;
+}
+
+.chess-pgn-viewer__piece {
+  color: var(--text-normal);
+  font-family: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.chess-pgn-viewer__piece.is-white {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.chess-pgn-viewer__piece.is-black {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.chess-pgn-viewer__file-label,
+.chess-pgn-viewer__rank-label {
+  color: color-mix(in srgb, var(--text-normal) 70%, transparent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  position: absolute;
+}
+
+.chess-pgn-viewer__file-label {
+  bottom: 0.25rem;
+  left: 0.35rem;
+}
+
+.chess-pgn-viewer__rank-label {
+  right: 0.3rem;
+  top: 0.25rem;
+}
+
+.chess-pgn-viewer__controls {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 0.75rem;
+}
+
+.chess-pgn-viewer__control {
+  background: var(--chess-panel-bg);
+  border: 1px solid var(--chess-panel-border);
+  border-radius: 12px;
+  color: var(--chess-text-strong);
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+  min-height: 2.75rem;
+}
+
+.chess-pgn-viewer__control:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.chess-pgn-viewer__meta {
+  margin-bottom: 0.85rem;
+}
+
+.chess-pgn-viewer__title {
+  color: var(--chess-text-strong);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.chess-pgn-viewer__summary {
+  color: var(--chess-text-muted);
+  font-size: 0.9rem;
+  margin-top: 0.15rem;
+}
+
+.chess-pgn-viewer__moves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.chess-pgn-viewer__line {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.chess-pgn-viewer__move {
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  color: var(--chess-text-strong);
+  cursor: pointer;
+  font-size: 0.98rem;
+  font-weight: 700;
+  padding: 0.1rem 0 0.1rem calc(var(--variation-depth, 0) * 1rem);
+  text-align: left;
+}
+
+.chess-pgn-viewer__move.is-active {
+  border-left-color: var(--chess-active);
+  color: var(--chess-active);
+}
+
+.chess-pgn-viewer__comment {
+  background: var(--chess-comment-bg);
+  border-radius: 10px;
+  color: var(--chess-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  padding: 0.55rem 0.7rem;
+  white-space: pre-wrap;
+  width: 100%;
+}
+
+.chess-pgn-viewer__variations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.chess-pgn-viewer__variation {
+  align-items: flex-start;
+  border-left: 1px solid color-mix(in srgb, var(--interactive-accent) 35%, transparent);
+  display: flex;
+  gap: 0.2rem;
+  margin-left: calc(var(--variation-depth, 0) * 1rem);
+  padding-left: 0.4rem;
+}
+
+.chess-pgn-viewer__variation-paren {
+  color: var(--chess-text-muted);
+  padding-top: 0.1rem;
+}
+
+.chess-pgn-viewer__error {
+  background: color-mix(in srgb, var(--background-modifier-error) 18%, var(--background-primary));
+  border: 1px solid color-mix(in srgb, var(--background-modifier-error) 55%, transparent);
+  border-radius: 14px;
+  color: var(--text-error);
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+}
+
+.chess-pgn-viewer__error-title {
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.chess-pgn-viewer__error-message {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 900px) {
+  .chess-pgn-viewer__content {
+    grid-template-columns: 1fr;
+  }
+}
