@@ -284,6 +284,63 @@ describe('ChessViewer', () => {
     expect(variation?.textContent).toContain('Bishop line');
   });
 
+  it('groups each move row with its comments and variations in a compact notation block', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState(`[Event "Compact"]
+1. e4 e5
+2. Nf3 {Mainline comment} (2. Bc4 {Bishop line}) Nc6
+3. Bb5 a6`);
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const blocks = container.querySelectorAll('.chess-pgn-viewer__notation-block');
+    const secondBlock = blocks[1] as HTMLElement | undefined;
+    const groupedChildren = Array.from(secondBlock?.children ?? []).map(child => child.className);
+
+    expect(blocks).toHaveLength(3);
+    expect(groupedChildren).toEqual([
+      'chess-pgn-viewer__notation-row',
+      'chess-pgn-viewer__notation-comment',
+      'chess-pgn-viewer__variation-list',
+    ]);
+    expect(secondBlock?.querySelector('.chess-pgn-viewer__notation-comment')?.textContent).toContain('Mainline comment');
+    expect(secondBlock?.querySelector('.chess-pgn-viewer__variation-line')?.textContent).toContain('2. Bc4');
+  });
+
+  it('renders move labels inside compact text wrappers while keeping buttons clickable', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 Nc6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const move = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move');
+    const text = move?.querySelector('.chess-pgn-viewer__move-text');
+
+    expect(text?.textContent).toBe('1. e4');
+
+    move?.click();
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active .chess-pgn-viewer__move-text')?.textContent).toBe('1. e4');
+  });
+
   it('renders colored move annotation glyphs in mainline and variations', () => {
     installObsidianDomHelpers();
     installResizeObserver();

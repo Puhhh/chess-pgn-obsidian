@@ -333,7 +333,8 @@ export class ChessViewer {
   }
 
   private renderNotationRow(hostEl: HTMLElement, row: NotationRow): void {
-    const rowEl = hostEl.createDiv({ cls: 'chess-pgn-viewer__notation-row' });
+    const blockEl = hostEl.createDiv({ cls: 'chess-pgn-viewer__notation-block' });
+    const rowEl = blockEl.createDiv({ cls: 'chess-pgn-viewer__notation-row' });
     rowEl.createDiv({ cls: 'chess-pgn-viewer__move-number', text: `${row.moveNumber}.` });
 
     const whiteCell = rowEl.createDiv({ cls: 'chess-pgn-viewer__move-cell is-white' });
@@ -347,7 +348,7 @@ export class ChessViewer {
           continue;
         }
 
-        hostEl.createDiv({
+        blockEl.createDiv({
           cls: 'chess-pgn-viewer__notation-comment',
           text: move.comment,
         });
@@ -355,7 +356,7 @@ export class ChessViewer {
     }
 
     if (this.options.showVariations && row.variations.length > 0) {
-      const variationsEl = hostEl.createDiv({ cls: 'chess-pgn-viewer__variation-list' });
+      const variationsEl = blockEl.createDiv({ cls: 'chess-pgn-viewer__variation-list' });
       for (const variation of row.variations) {
         const lineEl = variationsEl.createDiv({ cls: 'chess-pgn-viewer__variation-line' });
         lineEl.createSpan({ cls: 'chess-pgn-viewer__variation-bracket', text: '(' });
@@ -391,8 +392,8 @@ export class ChessViewer {
     const toneClass = move.annotation ? ` is-${move.annotation.tone}` : '';
     const button = hostEl.createEl('button', {
       cls: `${cls}${toneClass}`,
-      text: move.label,
     });
+    button.createSpan({ cls: 'chess-pgn-viewer__move-text', text: move.label });
     button.toggleClass('is-active', this.state.currentNodeId === move.id);
     button.addEventListener('click', () => {
       this.state.currentNodeId = move.id;
