@@ -8,6 +8,8 @@
 
 Chess PGN Viewer is an Obsidian plugin that renders interactive chess games inside ` ```chess ` code blocks. It turns PGN into a clickable board, supports move navigation, and displays comments, variations, board annotations, and move glyphs.
 
+See [CHANGELOG.md](./CHANGELOG.md) for release history.
+
 ## Screenshots
 
 ![Board view](docs/assets/board-view.png)
