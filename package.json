@@ -1,16 +1,21 @@
 {
   "name": "obsidian-chess-pgn",
-  "version": "0.1.0",
-"description": "Obsidian plugin for rendering interactive chess PGN blocks",
+  "version": "0.1.1",
+  "description": "Obsidian plugin for rendering interactive chess PGN blocks",
   "main": "main.js",
   "scripts": {
     "build": "node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^24.9.1",
+    "@typescript-eslint/parser": "^8.59.1",
     "esbuild": "^0.25.11",
+    "eslint": "^9.39.4",
+    "eslint-plugin-obsidianmd": "^0.2.8",
     "jsdom": "^26.1.0",
     "obsidian": "^1.8.10",
     "typescript": "^5.9.3",

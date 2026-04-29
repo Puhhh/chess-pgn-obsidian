@@ -3,7 +3,6 @@ import type { Position } from 'chessops/chess';
 import {
   type ChildNode,
   type CommentShapeColor,
-  type Game,
   type PgnNodeData,
   parsePgn,
   parseComment,

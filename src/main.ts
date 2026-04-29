@@ -4,7 +4,7 @@ import { buildGameState, parseChessBlock } from './chess/block';
 import { ChessViewer } from './chess/viewer';
 
 export default class ChessPgnViewerPlugin extends Plugin {
-  async onload(): Promise<void> {
+  onload(): void {
     this.registerMarkdownCodeBlockProcessor('chess', (source, el, ctx) => {
       this.renderChessBlock(source, el, ctx);
     });

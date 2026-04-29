@@ -6,6 +6,21 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.1] - 2026-04-29
+
+### Added
+
+- Added project ESLint setup with `eslint-plugin-obsidianmd`, flat config.
+
+### Changed
+
+- Updated release metadata and package manifests for version `0.1.1`.
+
+### Fixed
+
+- Removed the unnecessary `async` modifier from `onload`.
+- Removed the unused `Game` type import from the PGN parser module.
+
 ## [0.1.0] - 2026-04-29
 
 ### Added

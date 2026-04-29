@@ -1,7 +1,7 @@
 {
   "id": "chess-pgn-viewer",
   "name": "Chess PGN Viewer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.8.0",
   "description": "Render interactive chess PGN blocks inside notes.",
   "author": "Aleksei B",
