@@ -14,8 +14,6 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ![Board view](docs/assets/board-view.png)
 
-![Annotations and move glyphs](docs/assets/annotations.png)
-
 ## Features
 
 - Interactive chess board with previous, next, and reset navigation
