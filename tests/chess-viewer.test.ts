@@ -258,6 +258,31 @@ describe('ChessViewer', () => {
     expect(arrows).toHaveLength(2);
   });
 
+  it('renders Chessground cburnett piece artwork for both colors', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const whitePiece = container.querySelector<SVGSVGElement>('.chess-pgn-viewer__piece.is-white svg');
+    const blackPiece = container.querySelector<SVGSVGElement>('.chess-pgn-viewer__piece.is-black svg');
+
+    expect(whitePiece?.getAttribute('viewBox')).toBe('0 0 45 45');
+    expect(blackPiece?.getAttribute('viewBox')).toBe('0 0 45 45');
+    expect(whitePiece?.outerHTML).toContain('fill="#fff"');
+    expect(blackPiece?.outerHTML).toContain('stroke="#ececec"');
+    expect(whitePiece?.outerHTML).not.toBe(blackPiece?.outerHTML);
+  });
+
   it('sizes arrow SVG from measured board geometry and renders study-style move rows', () => {
     installObsidianDomHelpers();
     installResizeObserver();

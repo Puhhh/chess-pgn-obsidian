@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.2] - 2026-05-28
+
+### Changed
+
+- Replaced the custom chess piece artwork with Chessground cburnett piece assets.
+- Updated the project license metadata from MIT to GPL-3.0-or-later.
+
 ## [0.1.1] - 2026-04-29
 
 ### Added

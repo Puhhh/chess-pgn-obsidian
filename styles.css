@@ -114,35 +114,10 @@
   z-index: 1;
 }
 
-.chess-pgn-viewer__piece.is-white {
-  --piece-outline: rgba(18, 18, 18, 0.88);
-  color: #f4f1ea;
-}
-
-.chess-pgn-viewer__piece.is-black {
-  --piece-outline: rgba(244, 241, 234, 0.72);
-  color: #0f0f11;
-}
-
 .chess-pgn-viewer__piece-svg {
   display: block;
   height: 100%;
   width: 100%;
-}
-
-.chess-pgn-viewer__piece-svg .piece-fill {
-  fill: currentColor;
-  stroke: var(--piece-outline);
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-}
-
-.chess-pgn-viewer__piece-svg .piece-stroke {
-  fill: none;
-  stroke: var(--piece-outline);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2.2;
 }
 
 .chess-pgn-viewer__annotation--highlight {

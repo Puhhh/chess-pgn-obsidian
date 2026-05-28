@@ -1,7 +1,7 @@
 # Chess PGN Viewer
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.1.1-blue)](./manifest.json)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Version](https://img.shields.io/badge/version-0.1.2-blue)](./manifest.json)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.8%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
@@ -115,6 +115,7 @@ When fixing notation layout bugs, add a focused regression in `tests/chess-viewe
 ## Notes
 
 - The plugin targets Obsidian desktop and does not require a separate backend.
+- Chess piece artwork is based on the Chessground cburnett assets from `chessground.cburnett.css`.
 - `main.js` is generated; do not edit it by hand.
 - The local development copy in `.obsidian/plugins/chess-pgn-viewer/` is for testing only and is not part of the Git repository.
 - Manual Obsidian checks should include long SAN labels, black-move prefixes like `1...`, and variation rows in a narrow notation panel to ensure text wraps instead of clipping.
