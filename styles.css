@@ -260,24 +260,31 @@
 }
 
 .chess-pgn-viewer__notation-block {
-  border-top: 1px solid color-mix(in srgb, var(--chess-panel-border) 34%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--chess-panel-border) 28%, transparent);
 }
 
 .chess-pgn-viewer__notation-row {
-  align-items: start;
-  background: color-mix(in srgb, var(--chess-shell-strong) 78%, transparent);
+  align-items: stretch;
+  background: color-mix(in srgb, var(--chess-shell-strong) 66%, transparent);
   display: grid;
-  gap: 0.55rem;
-  grid-template-columns: 2.5rem minmax(0, 1fr) minmax(0, 1fr);
-  min-height: 3rem;
-  padding: 0.32rem 0.58rem;
+  gap: 0;
+  grid-auto-rows: minmax(35px, auto);
+  grid-template-columns: 0.15fr 0.425fr 0.425fr;
+  min-height: 35px;
+  padding: 0;
 }
 
 .chess-pgn-viewer__move-number {
-  color: var(--chess-text-muted);
+  align-items: center;
+  background: var(--color-base-10);
+  color: var(--color-base-60, var(--chess-text-muted));
+  display: flex;
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  justify-content: center;
+  min-width: 2.35rem;
+  padding: 0 0.35rem;
+  user-select: none;
 }
 
 .chess-pgn-viewer__move-cell {
@@ -289,37 +296,44 @@
   appearance: none;
   background: transparent;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   box-shadow: none;
   color: var(--chess-text-strong);
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.25;
   max-width: 100%;
   min-inline-size: 0;
   overflow: visible;
   padding: 0;
   text-align: left;
+  user-select: none;
   white-space: normal;
   word-break: normal;
 }
 
 .chess-pgn-viewer__move-cell .chess-pgn-viewer__move {
-  display: block;
+  align-items: center;
+  display: flex;
   inline-size: 100%;
 }
 
 .chess-pgn-viewer__move-text {
-  border-radius: inherit;
+  border-radius: 0;
   display: block;
   max-width: 100%;
   overflow: visible;
   overflow-wrap: anywhere;
-  padding: 0.18rem 0.32rem;
+  padding: 0.22rem 0.5rem 0.22rem 0.5rem;
   text-overflow: clip;
   white-space: normal;
+}
+
+.chess-pgn-viewer__move:hover {
+  background: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  color: var(--text-on-accent);
 }
 
 .chess-pgn-viewer__move.is-good:not(.is-active) {
@@ -347,11 +361,13 @@
 }
 
 .chess-pgn-viewer__move.is-active {
-  color: white;
+  background: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 10%));
+  color: var(--text-on-accent);
+  font-weight: 700;
 }
 
 .chess-pgn-viewer__move.is-active .chess-pgn-viewer__move-text {
-  background: var(--chess-active);
+  background: transparent;
 }
 
 .chess-pgn-viewer__move--variation {
@@ -365,28 +381,32 @@
   display: inline-flex;
   inline-size: auto;
   max-inline-size: 100%;
+  padding-left: 6px;
 }
 
 .chess-pgn-viewer__move-placeholder {
-  color: var(--chess-text-muted);
-  display: inline-block;
+  align-items: center;
+  color: var(--color-base-60, var(--chess-text-muted));
+  display: flex;
   font-weight: 700;
-  padding: 0.18rem 0.32rem;
+  padding: 0.22rem 0.5rem;
 }
 
 .chess-pgn-viewer__notation-comment {
   color: var(--chess-text-muted);
   font-size: 0.82rem;
   line-height: 1.34;
-  padding: 0.34rem 0.58rem 0.42rem 3.13rem;
+  padding: 0.34rem 0.58rem 0.42rem max(2.7rem, 15%);
   white-space: pre-wrap;
 }
 
 .chess-pgn-viewer__variation-list {
+  border-bottom: 1px solid var(--color-base-50, var(--chess-panel-border));
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
-  padding: 0.12rem 0.58rem 0.45rem 3.13rem;
+  gap: 0;
+  grid-column: span 3 / auto;
+  padding: 0;
 }
 
 .chess-pgn-viewer__variation-line {
@@ -397,6 +417,8 @@
   gap: 0.12rem;
   line-height: 1.25;
   overflow-wrap: anywhere;
+  padding: 0.25rem 0.5rem;
+  border-top: 1px solid var(--color-base-50, var(--chess-panel-border));
 }
 
 .chess-pgn-viewer__variation-bracket,

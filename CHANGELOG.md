@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.3] - 2026-05-28
+
+### Changed
+
+- Restyled the notation panel to use the obsidian-chess-study grid-style move list.
+
 ## [0.1.2] - 2026-05-28
 
 ### Changed

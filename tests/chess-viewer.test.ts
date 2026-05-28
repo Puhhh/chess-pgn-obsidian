@@ -175,6 +175,21 @@ describe('ChessViewer', () => {
     expect(styles).toContain('.chess-pgn-viewer__variation-line .chess-pgn-viewer__move');
   });
 
+  it('styles notation moves like the obsidian chess study grid', () => {
+    const styles = readFileSync(path.join(process.cwd(), 'styles.css'), 'utf8');
+
+    expect(styles).toContain('grid-template-columns: 0.15fr 0.425fr 0.425fr');
+    expect(styles).toContain('grid-auto-rows: minmax(35px, auto)');
+    expect(styles).toContain('.chess-pgn-viewer__move-number');
+    expect(styles).toContain('background: var(--color-base-10)');
+    expect(styles).toContain('.chess-pgn-viewer__move:hover');
+    expect(styles).toContain('background: hsl(var(--accent-h), var(--accent-s), var(--accent-l))');
+    expect(styles).toContain('color: var(--text-on-accent)');
+    expect(styles).toContain('.chess-pgn-viewer__move.is-active');
+    expect(styles).toContain('font-weight: 700');
+    expect(styles).toContain('grid-column: span 3 / auto');
+  });
+
   it('quantizes the board side to an exact 8-cell grid and reports equal square metrics', () => {
     expect(quantizeBoardSide(423)).toBe(416);
     expect(quantizeBoardSide(64)).toBe(64);
