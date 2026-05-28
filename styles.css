@@ -265,24 +265,26 @@
 
 .chess-pgn-viewer__notation-row {
   align-items: stretch;
-  background: color-mix(in srgb, var(--chess-shell-strong) 66%, transparent);
+  background: color-mix(in srgb, var(--chess-shell-strong) 72%, transparent);
   display: grid;
   gap: 0;
-  grid-auto-rows: minmax(35px, auto);
-  grid-template-columns: 0.15fr 0.425fr 0.425fr;
-  min-height: 35px;
+  grid-auto-rows: minmax(2.07em, auto);
+  grid-template-columns: 13% 43.5% 43.5%;
+  min-height: 2.07em;
   padding: 0;
 }
 
 .chess-pgn-viewer__move-number {
   align-items: center;
-  background: var(--color-base-10);
+  background: color-mix(in srgb, var(--chess-shell-strong) 72%, transparent);
+  border-inline-end: 1px solid color-mix(in srgb, var(--chess-panel-border) 48%, transparent);
   color: var(--color-base-60, var(--chess-text-muted));
   display: flex;
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
   justify-content: center;
-  min-width: 2.35rem;
+  line-height: 2.07em;
+  min-width: 0;
   padding: 0 0.35rem;
   user-select: none;
 }
@@ -303,7 +305,7 @@
   display: inline-flex;
   font-size: 0.92rem;
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.75em;
   max-width: 100%;
   min-inline-size: 0;
   overflow: visible;
@@ -318,6 +320,7 @@
   align-items: center;
   display: flex;
   inline-size: 100%;
+  padding: 0 0.3em 0 0.5em;
 }
 
 .chess-pgn-viewer__move-text {
@@ -326,14 +329,14 @@
   max-width: 100%;
   overflow: visible;
   overflow-wrap: anywhere;
-  padding: 0.22rem 0.5rem 0.22rem 0.5rem;
+  padding: 0;
   text-overflow: clip;
   white-space: normal;
 }
 
 .chess-pgn-viewer__move:hover {
-  background: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
-  color: var(--text-on-accent);
+  background: color-mix(in srgb, var(--background-modifier-hover) 72%, transparent);
+  color: var(--chess-text-strong);
 }
 
 .chess-pgn-viewer__move.is-good:not(.is-active) {
@@ -361,7 +364,7 @@
 }
 
 .chess-pgn-viewer__move.is-active {
-  background: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 10%));
+  background: color-mix(in srgb, var(--interactive-accent) 85%, transparent);
   color: var(--text-on-accent);
   font-weight: 700;
 }
@@ -373,15 +376,16 @@
 .chess-pgn-viewer__move--variation {
   color: color-mix(in srgb, var(--chess-text-strong) 88%, white);
   font-size: 0.86rem;
-  padding: 0;
+  padding: 0.2em 0.28em;
   white-space: normal;
 }
 
 .chess-pgn-viewer__variation-line .chess-pgn-viewer__move {
+  border-radius: 4px;
   display: inline-flex;
   inline-size: auto;
+  line-height: 1.45;
   max-inline-size: 100%;
-  padding-left: 6px;
 }
 
 .chess-pgn-viewer__move-placeholder {
@@ -389,20 +393,25 @@
   color: var(--color-base-60, var(--chess-text-muted));
   display: flex;
   font-weight: 700;
-  padding: 0.22rem 0.5rem;
+  line-height: 1.75em;
+  padding: 0 0.3em 0 0.5em;
 }
 
 .chess-pgn-viewer__notation-comment {
+  background: color-mix(in srgb, var(--chess-shell-strong) 62%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--chess-panel-border) 44%, transparent);
   color: var(--chess-text-muted);
   font-size: 0.82rem;
   line-height: 1.34;
-  padding: 0.34rem 0.58rem 0.42rem max(2.7rem, 15%);
+  padding: 0.34rem 0.58rem 0.42rem;
   white-space: pre-wrap;
 }
 
 .chess-pgn-viewer__variation-list {
-  border-bottom: 1px solid var(--color-base-50, var(--chess-panel-border));
+  background: color-mix(in srgb, var(--chess-shell-strong) 62%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--chess-panel-border) 52%, transparent);
   display: flex;
+  flex: 0 0 100%;
   flex-direction: column;
   gap: 0;
   grid-column: span 3 / auto;
@@ -418,7 +427,7 @@
   line-height: 1.25;
   overflow-wrap: anywhere;
   padding: 0.25rem 0.5rem;
-  border-top: 1px solid var(--color-base-50, var(--chess-panel-border));
+  border-top: 1px solid color-mix(in srgb, var(--chess-panel-border) 52%, transparent);
 }
 
 .chess-pgn-viewer__variation-bracket,

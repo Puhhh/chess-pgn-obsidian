@@ -175,19 +175,21 @@ describe('ChessViewer', () => {
     expect(styles).toContain('.chess-pgn-viewer__variation-line .chess-pgn-viewer__move');
   });
 
-  it('styles notation moves like the obsidian chess study grid', () => {
+  it('styles notation moves like the lichess column move list', () => {
     const styles = readFileSync(path.join(process.cwd(), 'styles.css'), 'utf8');
 
-    expect(styles).toContain('grid-template-columns: 0.15fr 0.425fr 0.425fr');
-    expect(styles).toContain('grid-auto-rows: minmax(35px, auto)');
+    expect(styles).toContain('grid-template-columns: 13% 43.5% 43.5%');
+    expect(styles).toContain('line-height: 1.75em');
     expect(styles).toContain('.chess-pgn-viewer__move-number');
-    expect(styles).toContain('background: var(--color-base-10)');
+    expect(styles).toContain('border-inline-end: 1px solid color-mix');
+    expect(styles).toContain('background: color-mix(in srgb, var(--chess-shell-strong) 72%, transparent)');
     expect(styles).toContain('.chess-pgn-viewer__move:hover');
-    expect(styles).toContain('background: hsl(var(--accent-h), var(--accent-s), var(--accent-l))');
+    expect(styles).toContain('background: color-mix(in srgb, var(--background-modifier-hover) 72%, transparent)');
     expect(styles).toContain('color: var(--text-on-accent)');
     expect(styles).toContain('.chess-pgn-viewer__move.is-active');
+    expect(styles).toContain('background: color-mix(in srgb, var(--interactive-accent) 85%, transparent)');
     expect(styles).toContain('font-weight: 700');
-    expect(styles).toContain('grid-column: span 3 / auto');
+    expect(styles).toContain('flex: 0 0 100%');
   });
 
   it('quantizes the board side to an exact 8-cell grid and reports equal square metrics', () => {

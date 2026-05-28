@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.4] - 2026-05-28
+
+### Changed
+
+- Restyled the notation panel move list to more closely match the lichess column analysis layout.
+
 ## [0.1.3] - 2026-05-28
 
 ### Changed
