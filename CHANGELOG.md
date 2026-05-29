@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.5] - 2026-05-29
+
+### Added
+
+- Added lichess-style board badges for move annotation glyphs on the active move.
+
 ## [0.1.4] - 2026-05-28
 
 ### Changed

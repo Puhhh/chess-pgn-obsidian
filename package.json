@@ -1,6 +1,6 @@
 {
   "name": "obsidian-chess-pgn",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Obsidian plugin for rendering interactive chess PGN blocks",
   "license": "GPL-3.0-or-later",
   "main": "main.js",

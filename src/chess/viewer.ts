@@ -72,6 +72,7 @@ export class ChessViewer {
   private readonly boardFrameEl: HTMLDivElement;
   private readonly boardEl: HTMLDivElement;
   private readonly highlightsEl: HTMLDivElement;
+  private readonly moveGlyphsEl: HTMLDivElement;
   private readonly arrowsSvg: SVGSVGElement;
   private readonly controlsEl: HTMLDivElement;
   private readonly notationPanelEl: HTMLDivElement;
@@ -100,6 +101,7 @@ export class ChessViewer {
     this.boardFrameEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__board-frame' });
     this.boardEl = this.boardFrameEl.createDiv({ cls: 'chess-pgn-viewer__board' });
     this.highlightsEl = this.boardFrameEl.createDiv({ cls: 'chess-pgn-viewer__annotations' });
+    this.moveGlyphsEl = this.boardFrameEl.createDiv({ cls: 'chess-pgn-viewer__move-glyphs' });
     this.arrowsSvg = containerEl.ownerDocument.createElementNS(SVG_NS, 'svg');
     this.arrowsSvg.setAttribute('class', 'chess-pgn-viewer__arrows');
     this.boardFrameEl.appendChild(this.arrowsSvg);
@@ -179,10 +181,12 @@ export class ChessViewer {
 
   private renderAnnotationState(): void {
     this.highlightsEl.replaceChildren();
+    this.moveGlyphsEl.replaceChildren();
     this.arrowsSvg.replaceChildren();
 
     const geometry = this.state.geometry;
-    const annotations = this.currentNode()?.annotations ?? [];
+    const currentNode = this.currentNode();
+    const annotations = currentNode?.annotations ?? [];
     if (!geometry || geometry.side === 0) {
       return;
     }
@@ -207,6 +211,27 @@ export class ChessViewer {
 
       this.renderArrow(annotation, geometry);
     }
+
+    this.renderMoveGlyph(currentNode, geometry);
+  }
+
+  private renderMoveGlyph(currentNode: GameNode | null, geometry: BoardGeometry): void {
+    if (!currentNode?.annotation) {
+      return;
+    }
+
+    const previousFen = this.parentNode(currentNode.id)?.fen ?? null;
+    const destinationSquare = lastMoveSquares(currentNode.fen, previousFen)?.to;
+    const metrics = destinationSquare ? geometry.squares[destinationSquare] : null;
+    if (!metrics) {
+      return;
+    }
+
+    const glyph = this.moveGlyphsEl.createDiv({
+      cls: `chess-pgn-viewer__move-glyph is-${currentNode.annotation.tone}`,
+    });
+    glyph.createSpan({ cls: 'chess-pgn-viewer__move-glyph-label', text: currentNode.annotation.glyph });
+    this.applySquareBounds(glyph, metrics);
   }
 
   private renderArrow(annotation: Extract<BoardAnnotation, { kind: 'arrow' }>, geometry: BoardGeometry): void {
@@ -454,6 +479,7 @@ export class ChessViewer {
     this.state.geometry = computeBoardGeometry([...this.squares.keys()], side);
 
     this.rootEl.style.setProperty('--board-side', `${side}px`);
+    this.boardFrameEl.style.setProperty('--square-size', `${this.state.geometry.squareSize}px`);
     this.boardFrameEl.style.width = `${side}px`;
     this.boardFrameEl.style.height = `${side}px`;
     this.boardEl.style.setProperty('--board-side', `${side}px`);
@@ -462,6 +488,8 @@ export class ChessViewer {
     this.boardEl.style.height = `${side}px`;
     this.highlightsEl.style.width = `${side}px`;
     this.highlightsEl.style.height = `${side}px`;
+    this.moveGlyphsEl.style.width = `${side}px`;
+    this.moveGlyphsEl.style.height = `${side}px`;
     this.arrowsSvg.style.width = `${side}px`;
     this.arrowsSvg.style.height = `${side}px`;
 

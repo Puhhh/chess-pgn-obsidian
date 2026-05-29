@@ -435,6 +435,49 @@ describe('ChessViewer', () => {
     expect(variationButton?.className).toContain('is-interesting');
   });
 
+  it('renders the active move annotation glyph on the destination square', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4! e5 2. Nf3?? Nc6!?');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+    moveButtons[0]?.click();
+
+    let glyphs = container.querySelectorAll<HTMLElement>('.chess-pgn-viewer__move-glyph');
+    expect(glyphs).toHaveLength(1);
+    expect(glyphs[0]?.textContent).toBe('!');
+    expect(glyphs[0]?.classList.contains('is-good')).toBe(true);
+    expect(glyphs[0]?.style.left).toBe('208px');
+    expect(glyphs[0]?.style.top).toBe('208px');
+
+    moveButtons[1]?.click();
+    expect(container.querySelectorAll('.chess-pgn-viewer__move-glyph')).toHaveLength(0);
+
+    moveButtons[2]?.click();
+    glyphs = container.querySelectorAll<HTMLElement>('.chess-pgn-viewer__move-glyph');
+    expect(glyphs).toHaveLength(1);
+    expect(glyphs[0]?.textContent).toBe('??');
+    expect(glyphs[0]?.classList.contains('is-blunder')).toBe(true);
+    expect(glyphs[0]?.style.left).toBe('260px');
+    expect(glyphs[0]?.style.top).toBe('260px');
+
+    moveButtons[3]?.click();
+    glyphs = container.querySelectorAll<HTMLElement>('.chess-pgn-viewer__move-glyph');
+    expect(glyphs).toHaveLength(1);
+    expect(glyphs[0]?.textContent).toBe('!?');
+    expect(glyphs[0]?.classList.contains('is-interesting')).toBe(true);
+  });
+
   it('omits placeholder header metadata when event and players are missing from PGN', () => {
     installObsidianDomHelpers();
     installResizeObserver();

@@ -58,6 +58,7 @@
 }
 
 .chess-pgn-viewer__annotations,
+.chess-pgn-viewer__move-glyphs,
 .chess-pgn-viewer__arrows {
   inset: 0;
   pointer-events: none;
@@ -71,6 +72,10 @@
 .chess-pgn-viewer__arrows {
   overflow: visible;
   z-index: 3;
+}
+
+.chess-pgn-viewer__move-glyphs {
+  z-index: 4;
 }
 
 .chess-pgn-viewer__square {
@@ -176,6 +181,53 @@
 .chess-pgn-viewer__annotation-head.is-blue {
   fill: var(--annotation-blue);
   stroke: var(--annotation-blue);
+}
+
+.chess-pgn-viewer__move-glyph {
+  align-items: start;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: end;
+  padding: max(0.16rem, calc(var(--square-size, 52px) * 0.045));
+  position: absolute;
+}
+
+.chess-pgn-viewer__move-glyph-label {
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.38);
+  color: white;
+  display: inline-block;
+  font-size: max(0.74rem, calc(var(--square-size, 52px) * 0.24));
+  font-weight: 800;
+  line-height: 1;
+  min-inline-size: max(1.22rem, calc(var(--square-size, 52px) * 0.34));
+  padding: 0.16em 0.28em 0.18em;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.42);
+}
+
+.chess-pgn-viewer__move-glyph.is-good .chess-pgn-viewer__move-glyph-label {
+  background: #5ea33d;
+}
+
+.chess-pgn-viewer__move-glyph.is-brilliant .chess-pgn-viewer__move-glyph-label {
+  background: #3e7f20;
+}
+
+.chess-pgn-viewer__move-glyph.is-mistake .chess-pgn-viewer__move-glyph-label {
+  background: #d3872f;
+}
+
+.chess-pgn-viewer__move-glyph.is-blunder .chess-pgn-viewer__move-glyph-label {
+  background: #d05757;
+}
+
+.chess-pgn-viewer__move-glyph.is-interesting .chess-pgn-viewer__move-glyph-label {
+  background: #8d68cc;
+}
+
+.chess-pgn-viewer__move-glyph.is-dubious .chess-pgn-viewer__move-glyph-label {
+  background: #5da1da;
 }
 
 .chess-pgn-viewer__file-label,
