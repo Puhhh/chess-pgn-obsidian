@@ -28,14 +28,11 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Installation
 
-### From source
-
-1. Clone this repository.
-2. Run `npm install`.
-3. Run `npm run build`.
-4. Copy `main.js` and `styles.css` into your vault plugin folder at `.obsidian/plugins/chess-pgn-viewer/`.
-   - Example: `cp main.js .obsidian/plugins/chess-pgn-viewer/main.js && cp styles.css .obsidian/plugins/chess-pgn-viewer/styles.css`
-5. Reload Obsidian and enable the plugin.
+1. Open Obsidian Settings.
+2. Go to Community plugins.
+3. Search for `Chess PGN Viewer`.
+4. Install the plugin.
+5. Activate the plugin from Community Plugins.
 
 ## Usage
 
