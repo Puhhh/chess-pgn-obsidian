@@ -1,5 +1,5 @@
-import { makeFen } from 'chessops/fen';
-import type { Position } from 'chessops/chess';
+import { makeFen, parseFen } from 'chessops/fen';
+import { Chess, type Position } from 'chessops/chess';
 import {
   type ChildNode,
   type CommentShapeColor,
@@ -23,6 +23,7 @@ export interface ChessBlockOptions {
 export interface ParsedChessBlock {
   options: ChessBlockOptions;
   pgn: string;
+  fen?: string;
   warnings: string[];
 }
 
@@ -69,6 +70,7 @@ export interface GameNode {
 }
 
 export interface GameState {
+  mode: 'pgn' | 'fen';
   headers: Record<string, string>;
   root: GameNode;
   currentNodeId: string;
@@ -111,6 +113,7 @@ export function parseChessBlock(source: string): ParsedChessBlock {
   const options: ChessBlockOptions = { ...DEFAULT_OPTIONS };
   const warnings: string[] = [];
   const pgnLines: string[] = [];
+  let fen: string | undefined;
   let readingOptions = true;
 
   for (const line of lines) {
@@ -136,6 +139,11 @@ export function parseChessBlock(source: string): ParsedChessBlock {
           continue;
         }
 
+        if (rawKey === 'fen') {
+          fen = value;
+          continue;
+        }
+
         if (BOOLEAN_OPTIONS.has(rawKey)) {
           if (value === 'true' || value === 'false') {
             options[key] = value === 'true' as never;
@@ -157,6 +165,7 @@ export function parseChessBlock(source: string): ParsedChessBlock {
   return {
     options,
     pgn: pgnLines.join('\n').trim(),
+    fen,
     warnings,
   };
 }
@@ -167,10 +176,19 @@ export function buildGameState(pgn: string): GameState {
     throw new Error('Invalid PGN: empty input');
   }
 
+  if (isRawFenInput(trimmed)) {
+    return buildFenState(trimmed);
+  }
+
   const parsedGames = parsePgn(trimmed);
   const game = parsedGames[0];
   if (!game) {
     throw new Error('Invalid PGN: no game found');
+  }
+
+  const headerFen = game.headers.get('FEN');
+  if (headerFen && !game.moves.children.length) {
+    return buildFenState(headerFen);
   }
 
   const position = startingPosition(game.headers).unwrap(
@@ -213,11 +231,57 @@ export function buildGameState(pgn: string): GameState {
   }
 
   return {
+    mode: 'pgn',
     headers: Object.fromEntries(game.headers.entries()),
     root,
     currentNodeId: 'root',
     nodeIndex,
   };
+}
+
+function buildFenState(fen: string): GameState {
+  const setup = parseFen(fen).unwrap(
+    value => value,
+    error => {
+      throw new Error(`Invalid FEN: ${error.message}`);
+    },
+  );
+  const position = Chess.fromSetup(setup).unwrap(
+    value => value,
+    error => {
+      throw new Error(`Invalid FEN: ${error.message}`);
+    },
+  );
+
+  const root: GameNode = {
+    id: 'root',
+    san: null,
+    ply: 0,
+    moveNumber: null,
+    color: null,
+    fen: makeFen(position.toSetup()),
+    annotation: null,
+    comment: null,
+    annotations: [],
+    children: [],
+    variations: [],
+  };
+
+  return {
+    mode: 'fen',
+    headers: {},
+    root,
+    currentNodeId: 'root',
+    nodeIndex: new Map<string, GameNode>([['root', root]]),
+  };
+}
+
+function isRawFenInput(source: string): boolean {
+  if (source.startsWith('[') || /\d+\s*\./.test(source)) {
+    return false;
+  }
+
+  return source.includes('/') && source.trim().split(/\s+/).length >= 4;
 }
 
 export function boardPiecesFromFen(fen: string): BoardPiece[] {

@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.6] - 2026-05-30
+
+### Added
+
+- Added static FEN position rendering for `fen:`, standalone `[FEN "..."]`, and raw FEN chess blocks.
+- Added README screenshots for PGN and FEN block examples.
+
 ## [0.1.5] - 2026-05-29
 
 ### Added

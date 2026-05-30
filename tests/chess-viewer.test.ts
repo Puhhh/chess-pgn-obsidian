@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { buildGameState } from '../src/chess/block';
+import { buildGameState, parseChessBlock } from '../src/chess/block';
 import {
   ChessViewer,
   computeBoardGeometry,
@@ -298,6 +298,69 @@ describe('ChessViewer', () => {
     expect(whitePiece?.outerHTML).toContain('fill="#fff"');
     expect(blackPiece?.outerHTML).toContain('stroke="#ececec"');
     expect(whitePiece?.outerHTML).not.toBe(blackPiece?.outerHTML);
+  });
+
+  it('renders raw fen positions as board-only blocks without notation or controls', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__piece.is-white svg')).toHaveLength(16);
+    expect(container.querySelectorAll('.chess-pgn-viewer__piece.is-black svg')).toHaveLength(16);
+    expect(container.querySelector('.chess-pgn-viewer__controls')).toBeNull();
+    expect(container.querySelector('.chess-pgn-viewer__notation-panel')).toBeNull();
+  });
+
+  it('renders explicit fen option blocks as board-only positions', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const block = parseChessBlock(`orientation: black
+fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
+    const gameState = buildGameState(block.fen ?? block.pgn);
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, block.options);
+
+    expect(container.querySelector('.chess-pgn-viewer')?.classList.contains('is-orientation-black')).toBe(true);
+    expect(container.querySelectorAll('.chess-pgn-viewer__piece.is-white svg')).toHaveLength(15);
+    expect(container.querySelectorAll('.chess-pgn-viewer__piece.is-black svg')).toHaveLength(15);
+    expect(container.querySelector('.chess-pgn-viewer__controls')).toBeNull();
+    expect(container.querySelector('.chess-pgn-viewer__notation-panel')).toBeNull();
+  });
+
+  it('keeps black orientation labels for raw fen board-only blocks', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'black',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const fileLabels = Array.from(container.querySelectorAll('.chess-pgn-viewer__file-label')).map(label => label.textContent);
+    const rankLabels = Array.from(container.querySelectorAll('.chess-pgn-viewer__rank-label')).map(label => label.textContent);
+
+    expect(container.querySelector('.chess-pgn-viewer')?.classList.contains('is-orientation-black')).toBe(true);
+    expect(fileLabels).toEqual(['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a']);
+    expect(rankLabels).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
   });
 
   it('sizes arrow SVG from measured board geometry and renders study-style move rows', () => {

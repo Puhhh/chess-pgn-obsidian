@@ -7,6 +7,8 @@ import {
 } from '../src/chess/block';
 
 describe('parseChessBlock', () => {
+  const fen = 'r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17';
+
   it('extracts options and raw pgn text from a chess block', () => {
     const source = `orientation: black
 showMoves: true
@@ -37,9 +39,66 @@ showComments: false
     expect(block.options.orientation).toBe('white');
     expect(block.warnings).toEqual(['Unknown option: boardSize']);
   });
+
+  it('extracts explicit fen option without treating it as pgn text', () => {
+    const source = `orientation: black
+fen: ${fen}`;
+
+    const block = parseChessBlock(source);
+
+    expect(block.options.orientation).toBe('black');
+    expect(block.fen).toBe(fen);
+    expect(block.pgn).toBe('');
+    expect(block.warnings).toEqual([]);
+  });
 });
 
 describe('buildGameState', () => {
+  const fen = 'r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17';
+
+  it('builds a static board state from raw fen input', () => {
+    const state = buildGameState('r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4');
+
+    expect(state.mode).toBe('fen');
+    expect(state.root.fen).toBe('r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4');
+    expect(state.root.children).toHaveLength(0);
+    expect(state.currentNodeId).toBe('root');
+  });
+
+  it('throws a helpful error for invalid raw fen input', () => {
+    expect(() => buildGameState('8/8/8/8/8/8/8/8 w - - 0 1')).toThrow(/invalid fen/i);
+  });
+
+  it('builds a static board state from explicit fen option content', () => {
+    const block = parseChessBlock(`fen: ${fen}`);
+    const state = buildGameState(block.fen ?? block.pgn);
+
+    expect(state.mode).toBe('fen');
+    expect(state.root.fen).toBe(fen);
+    expect(state.root.children).toHaveLength(0);
+  });
+
+  it('builds a static board state from a standalone fen header', () => {
+    const state = buildGameState(`[FEN "${fen}"]`);
+
+    expect(state.mode).toBe('fen');
+    expect(state.root.fen).toBe(fen);
+    expect(state.root.children).toHaveLength(0);
+  });
+
+  it('throws a helpful error for an invalid standalone fen header', () => {
+    expect(() => buildGameState('[FEN "8/8/8/8/8/8/8/8 w - - 0 1"]')).toThrow(/invalid fen/i);
+  });
+
+  it('keeps pgn with a fen header navigable as pgn', () => {
+    const state = buildGameState(`[SetUp "1"]
+[FEN "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2"]
+2. Nf3`);
+
+    expect(state.mode).toBe('pgn');
+    expect(state.root.children[0]?.san).toBe('Nf3');
+  });
+
   it('builds navigation state with comments and a variation', () => {
     const source = `[Event "Example"]
 1. e4 {King pawn opening} e5 2. Nf3 (2. Bc4 {Bishop opening}) Nc6`;
