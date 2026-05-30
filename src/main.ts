@@ -17,7 +17,7 @@ export default class ChessPgnViewerPlugin extends Plugin {
         console.warn(`[Chess PGN Viewer] ${warning}`, { file: ctx.sourcePath });
       }
 
-      const state = buildGameState(parsed.pgn);
+      const state = buildGameState(parsed.fen ?? parsed.pgn);
       el.addClass('chess-pgn-viewer-root');
       new ChessViewer(el, state, parsed.options);
     } catch (error) {

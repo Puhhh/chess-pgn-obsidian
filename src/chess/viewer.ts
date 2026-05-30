@@ -74,11 +74,11 @@ export class ChessViewer {
   private readonly highlightsEl: HTMLDivElement;
   private readonly moveGlyphsEl: HTMLDivElement;
   private readonly arrowsSvg: SVGSVGElement;
-  private readonly controlsEl: HTMLDivElement;
-  private readonly notationPanelEl: HTMLDivElement;
-  private readonly prevButton: HTMLButtonElement;
-  private readonly resetButton: HTMLButtonElement;
-  private readonly nextButton: HTMLButtonElement;
+  private readonly controlsEl?: HTMLDivElement;
+  private readonly notationPanelEl?: HTMLDivElement;
+  private readonly prevButton?: HTMLButtonElement;
+  private readonly resetButton?: HTMLButtonElement;
+  private readonly nextButton?: HTMLButtonElement;
   private readonly squares = new Map<string, SquareParts>();
   private readonly resizeObserver?: ResizeObserver;
 
@@ -105,16 +105,18 @@ export class ChessViewer {
     this.arrowsSvg = containerEl.ownerDocument.createElementNS(SVG_NS, 'svg');
     this.arrowsSvg.setAttribute('class', 'chess-pgn-viewer__arrows');
     this.boardFrameEl.appendChild(this.arrowsSvg);
-    this.controlsEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
-    this.notationPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
 
     this.buildBoardShell();
-    this.prevButton = this.createControlButton('←', () => this.goPrevious());
-    this.resetButton = this.createControlButton('•', () => {
-      this.state.currentNodeId = 'root';
-      this.render();
-    });
-    this.nextButton = this.createControlButton('→', () => this.goNext());
+    if (this.gameState.mode === 'pgn') {
+      this.controlsEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
+      this.notationPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
+      this.prevButton = this.createControlButton('←', () => this.goPrevious());
+      this.resetButton = this.createControlButton('•', () => {
+        this.state.currentNodeId = 'root';
+        this.render();
+      });
+      this.nextButton = this.createControlButton('→', () => this.goNext());
+    }
 
     const availableWidth = this.getAvailableBoardWidth();
     if (typeof ResizeObserver !== 'undefined') {
@@ -132,6 +134,7 @@ export class ChessViewer {
 
   private render(): void {
     this.rootEl.toggleClass('is-orientation-black', this.options.orientation === 'black');
+    this.rootEl.toggleClass('is-mode-fen', this.gameState.mode === 'fen');
     this.renderBoardState();
     this.renderAnnotationState();
     this.renderControlState();
@@ -278,6 +281,10 @@ export class ChessViewer {
   }
 
   private renderControlState(): void {
+    if (!this.prevButton || !this.resetButton || !this.nextButton) {
+      return;
+    }
+
     const path = nodePath(this.gameState.root, this.state.currentNodeId);
     const canGoBack = path.length > 1;
     const currentNode = this.currentNode();
@@ -291,6 +298,10 @@ export class ChessViewer {
   }
 
   private renderNotation(): void {
+    if (!this.notationPanelEl) {
+      return;
+    }
+
     const scrollTop = this.notationPanelEl.scrollTop;
     const scrollLeft = this.notationPanelEl.scrollLeft;
     this.notationPanelEl.empty();
@@ -337,6 +348,10 @@ export class ChessViewer {
   }
 
   private syncActiveMoveVisibility(): void {
+    if (!this.notationPanelEl) {
+      return;
+    }
+
     const activeMove = this.notationPanelEl.querySelector<HTMLElement>('.chess-pgn-viewer__move.is-active');
     if (!activeMove) {
       return;
@@ -429,7 +444,7 @@ export class ChessViewer {
   }
 
   private createControlButton(label: string, onClick: () => void): HTMLButtonElement {
-    const button = this.controlsEl.createEl('button', {
+    const button = this.controlsEl!.createEl('button', {
       cls: 'chess-pgn-viewer__control',
       text: label,
     });

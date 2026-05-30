@@ -1,7 +1,7 @@
 {
   "name": "obsidian-chess-pgn",
-  "version": "0.1.5",
-  "description": "Obsidian plugin for rendering interactive chess PGN blocks",
+  "version": "0.1.7",
+  "description": "Obsidian plugin for rendering interactive chess PGN games and static FEN positions",
   "license": "GPL-3.0-or-later",
   "main": "main.js",
   "scripts": {

@@ -1,12 +1,12 @@
 # Chess PGN Viewer
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![Version](https://img.shields.io/badge/version-0.1.5-blue)](./manifest.json)
+[![Version](https://img.shields.io/badge/version-0.1.7-blue)](./manifest.json)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.8%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
 
-Chess PGN Viewer is an Obsidian plugin that renders interactive chess games inside ` ```chess ` code blocks. It turns PGN into a clickable board, supports move navigation, and displays comments, variations, board annotations, and move glyphs.
+Chess PGN Viewer is an Obsidian plugin that renders interactive chess games and static positions inside ` ```chess ` code blocks. It turns PGN into a clickable board, supports FEN positions, and displays comments, variations, board annotations, and move glyphs.
 
 See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
@@ -18,6 +18,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 - Interactive chess board with previous, next, and reset navigation
 - PGN parsing with mainline moves and nested variations
+- Static FEN position rendering
 - Support for PGN comments and board annotations:
   - `%csl` square highlights
   - `%cal` arrows
@@ -54,9 +55,26 @@ showVariations: true
 3. Bb5 a6
 ```
 
+![Training Game](/docs/assets/training-game.png)
+
+For a static position, use either `fen:`:
+
+```chess
+fen: r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4
+```
+
+Or use a standalone `[FEN "..."]` header:
+
+```chess
+[FEN "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4"]
+```
+
+![FEN](/docs/assets/fen.png)
+
 ### Supported block options
 
 - `orientation: white | black`
+- `fen: <FEN>`
 - `showMoves: true | false`
 - `showComments: true | false`
 - `showVariations: true | false`
@@ -94,7 +112,7 @@ No output means the local Obsidian plugin copy is in sync.
 ## Project Structure
 
 - `src/main.ts` - Obsidian plugin entry point
-- `src/chess/block.ts` - PGN parsing and game-state model
+- `src/chess/block.ts` - PGN/FEN parsing and game-state model
 - `src/chess/viewer.ts` - board rendering, navigation, and notation UI
 - `tests/` - Vitest coverage for parsing and viewer behavior
 - `docs/assets/` - screenshot assets used in this README
@@ -103,7 +121,7 @@ No output means the local Obsidian plugin copy is in sync.
 
 ## Testing
 
-Tests use `vitest` with `jsdom`. The most important coverage is around PGN parsing, notation layout, navigation, geometry, and annotation rendering. Run the full suite before publishing changes.
+Tests use `vitest` with `jsdom`. The most important coverage is around PGN/FEN parsing, notation layout, navigation, geometry, and annotation rendering. Run the full suite before publishing changes.
 
 When fixing notation layout bugs, add a focused regression in `tests/chess-viewer.test.ts` first and cover both the CSS contract and the rendered DOM behavior.
 

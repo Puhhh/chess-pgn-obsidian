@@ -22,11 +22,20 @@
   padding: 0.75rem;
 }
 
+.chess-pgn-viewer.is-mode-fen {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+
 .chess-pgn-viewer__content {
   align-items: start;
   display: grid;
   gap: 0.85rem;
   grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+}
+
+.chess-pgn-viewer.is-mode-fen .chess-pgn-viewer__content {
+  grid-template-columns: minmax(0, 420px);
 }
 
 .chess-pgn-viewer__board-panel,
@@ -46,6 +55,11 @@
   border-radius: 10px 10px 0 0;
   overflow: hidden;
   position: relative;
+}
+
+.chess-pgn-viewer.is-mode-fen .chess-pgn-viewer__board-frame {
+  border-bottom: 1px solid var(--chess-panel-border);
+  border-radius: 10px;
 }
 
 .chess-pgn-viewer__board {
