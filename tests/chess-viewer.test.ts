@@ -192,6 +192,13 @@ describe('ChessViewer', () => {
     expect(styles).toContain('flex: 0 0 100%');
   });
 
+  it('shrinks static fen blocks to the board instead of leaving an empty notation area', () => {
+    const styles = readFileSync(path.join(process.cwd(), 'styles.css'), 'utf8');
+
+    expect(styles).toMatch(/\.chess-pgn-viewer\.is-mode-fen\s*\{[^}]*inline-size:\s*fit-content;/);
+    expect(styles).toMatch(/\.chess-pgn-viewer\.is-mode-fen\s*\{[^}]*max-inline-size:\s*100%;/);
+  });
+
   it('quantizes the board side to an exact 8-cell grid and reports equal square metrics', () => {
     expect(quantizeBoardSide(423)).toBe(416);
     expect(quantizeBoardSide(64)).toBe(64);
@@ -338,6 +345,50 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
     expect(container.querySelectorAll('.chess-pgn-viewer__piece.is-black svg')).toHaveLength(15);
     expect(container.querySelector('.chess-pgn-viewer__controls')).toBeNull();
     expect(container.querySelector('.chess-pgn-viewer__notation-panel')).toBeNull();
+  });
+
+  it('renders standalone fen header blocks with surrounding blank lines as board-only positions', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const block = parseChessBlock(`
+[FEN "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4"]
+`);
+    const gameState = buildGameState(block.fen ?? block.pgn);
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, block.options);
+
+    expect(gameState.mode).toBe('fen');
+    expect(container.querySelector('.chess-pgn-viewer__controls')).toBeNull();
+    expect(container.querySelector('.chess-pgn-viewer__notation-panel')).toBeNull();
+    expect(container.querySelectorAll('.chess-pgn-viewer__piece svg').length).toBeGreaterThan(0);
+  });
+
+  it('keeps pgn games with a fen header interactive', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState(`[SetUp "1"]
+[FEN "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2"]
+2. Nf3 Nc6`);
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    expect(container.querySelector('.chess-pgn-viewer__controls')).not.toBeNull();
+    expect(container.querySelector('.chess-pgn-viewer__notation-panel')).not.toBeNull();
+    expect(Array.from(container.querySelectorAll('.chess-pgn-viewer__move')).map(move => move.textContent)).toEqual([
+      '1. Nf3',
+      '1... Nc6',
+    ]);
   });
 
   it('keeps black orientation labels for raw fen board-only blocks', () => {

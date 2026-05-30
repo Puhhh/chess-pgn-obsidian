@@ -1,7 +1,7 @@
 {
   "id": "chess-pgn-viewer",
   "name": "Chess PGN Viewer",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "minAppVersion": "1.8.0",
   "description": "Render interactive chess PGN games and static FEN positions inside notes.",
   "author": "Aleksei B",

@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.7] - 2026-05-30
+
+### Fixed
+
+- Removed the empty notation area from static FEN blocks so they render as board-only views.
+- Updated the FEN screenshot to show the board-only layout.
+
 ## [0.1.6] - 2026-05-30
 
 ### Added

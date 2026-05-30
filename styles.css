@@ -22,6 +22,11 @@
   padding: 0.75rem;
 }
 
+.chess-pgn-viewer.is-mode-fen {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+
 .chess-pgn-viewer__content {
   align-items: start;
   display: grid;
