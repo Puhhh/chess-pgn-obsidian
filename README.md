@@ -1,7 +1,7 @@
 # Chess PGN Viewer
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![Version](https://img.shields.io/badge/version-0.1.8-blue)](./manifest.json)
+[![Version](https://img.shields.io/badge/version-0.1.9-blue)](./manifest.json)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.8%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
@@ -65,7 +65,7 @@ You can also add temporary board marks while viewing a game:
 - Use `Command` or `Option` for blue, `Control` for red, and `Control` with `Command` or `Option` for orange.
 - Select a PGN move and click the save icon to write the current board marks into that move comment as `%csl` and `%cal` annotations.
 
-Saved board marks are written back to the note as standard PGN annotations. Orange marks are saved as yellow because `%csl` and `%cal` support green, red, yellow, and blue.
+Unsaved board marks are temporary for the selected move and are cleared when you navigate to another move. Saved board marks are written back to the note as standard PGN annotations. Orange marks are saved as yellow because `%csl` and `%cal` support green, red, yellow, and blue.
 
 ![Board Marks](/docs/assets/board-marks.png)
 
@@ -127,8 +127,8 @@ GitHub Releases are published by GitHub Actions when a version tag is pushed.
 
 1. Update `package.json`, `package-lock.json`, `manifest.json`, `versions.json`, and `CHANGELOG.md`.
 2. Run `npm run lint`, `npm test`, and `npm run build`.
-3. Commit the release changes.
-4. Create and push a version tag:
+3. Commit the release changes, open a pull request into `main`, and merge it.
+4. Create and push a version tag from `main`:
 
 ```bash
 git tag X.Y.Z
