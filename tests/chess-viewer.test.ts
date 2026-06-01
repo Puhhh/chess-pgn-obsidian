@@ -733,6 +733,34 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
     expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
   });
 
+  it('can start from a saved active move after markdown rerender', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 {Center [%csl Ge4]} e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      { initialNodeId: '0' },
+    );
+
+    const activeMove = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move.is-active');
+    const e4Piece = container.querySelector<HTMLElement>('.chess-pgn-viewer__square[data-square="e4"] .chess-pgn-viewer__piece');
+    const e2Piece = container.querySelector<HTMLElement>('.chess-pgn-viewer__square[data-square="e2"] .chess-pgn-viewer__piece');
+
+    expect(activeMove?.textContent).toBe('1. e4');
+    expect(e4Piece?.classList.contains('is-white')).toBe(true);
+    expect(e2Piece?.classList.contains('is-white')).toBe(false);
+  });
+
   it('toggles saved board circles off when drawing the same circle again', async () => {
     installObsidianDomHelpers();
     installResizeObserver();

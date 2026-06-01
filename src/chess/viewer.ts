@@ -36,6 +36,7 @@ export interface SaveBoardAnnotationsRequest {
 export interface ChessViewerCallbacks {
   onSaveAnnotations?: (request: SaveBoardAnnotationsRequest) => Promise<void>;
   renderSaveIcon?: (button: HTMLButtonElement) => void;
+  initialNodeId?: string;
 }
 
 interface PendingTemporaryAnnotation {
@@ -118,7 +119,7 @@ export class ChessViewer {
     private readonly callbacks: ChessViewerCallbacks = {},
   ) {
     this.state = {
-      currentNodeId: gameState.currentNodeId,
+      currentNodeId: this.resolveInitialNodeId(callbacks.initialNodeId),
       geometry: null,
     };
 
@@ -712,6 +713,14 @@ export class ChessViewer {
 
   private currentNode(): GameNode | undefined {
     return this.gameState.nodeIndex.get(this.state.currentNodeId);
+  }
+
+  private resolveInitialNodeId(initialNodeId: string | undefined): string {
+    if (initialNodeId && this.gameState.nodeIndex.has(initialNodeId)) {
+      return initialNodeId;
+    }
+
+    return this.gameState.currentNodeId;
   }
 
   private parentNode(nodeId: string | null): GameNode | undefined {

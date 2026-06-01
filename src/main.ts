@@ -8,6 +8,8 @@ import {
 import { ChessViewer, type SaveBoardAnnotationsRequest } from './chess/viewer';
 
 export default class ChessPgnViewerPlugin extends Plugin {
+  private readonly savedNodeIds = new Map<string, string>();
+
   onload(): void {
     this.registerMarkdownCodeBlockProcessor('chess', (source, el, ctx) => {
       this.renderChessBlock(source, el, ctx);
@@ -22,10 +24,17 @@ export default class ChessPgnViewerPlugin extends Plugin {
       }
 
       const state = buildGameState(parsed.fen ?? parsed.pgn);
+      const blockKey = this.blockKey(el, ctx);
+      const initialNodeId = blockKey ? this.savedNodeIds.get(blockKey) : undefined;
+      if (initialNodeId && !state.nodeIndex.has(initialNodeId)) {
+        this.savedNodeIds.delete(blockKey);
+      }
+
       el.addClass('chess-pgn-viewer-root');
       new ChessViewer(el, state, parsed.options, {
         onSaveAnnotations: request => this.saveBoardAnnotations(el, ctx, request),
         renderSaveIcon: button => setIcon(button, 'save'),
+        initialNodeId: initialNodeId && state.nodeIndex.has(initialNodeId) ? initialNodeId : undefined,
       });
     } catch (error) {
       this.renderErrorState(el, error);
@@ -58,6 +67,7 @@ export default class ChessPgnViewerPlugin extends Plugin {
         );
         return replaceChessBlockSection(documentText, sectionInfo.lineStart, sectionInfo.lineEnd, updatedSource);
       });
+      this.savedNodeIds.set(this.blockKeyFromSection(ctx.sourcePath, sectionInfo.lineStart), request.nodeId);
       new Notice('Chess board annotations saved.');
     } catch (error) {
       throw this.noticeSaveError(error instanceof Error ? error.message : 'Cannot save chess annotations.');
@@ -67,6 +77,19 @@ export default class ChessPgnViewerPlugin extends Plugin {
   private noticeSaveError(message: string): Error {
     new Notice(message);
     return new Error(message);
+  }
+
+  private blockKey(el: HTMLElement, ctx: MarkdownPostProcessorContext): string | null {
+    const sectionInfo = ctx.getSectionInfo(el);
+    if (!sectionInfo) {
+      return null;
+    }
+
+    return this.blockKeyFromSection(ctx.sourcePath, sectionInfo.lineStart);
+  }
+
+  private blockKeyFromSection(sourcePath: string, lineStart: number): string {
+    return `${sourcePath}:${lineStart}`;
   }
 
   private renderErrorState(el: HTMLElement, error: unknown): void {
