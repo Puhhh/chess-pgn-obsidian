@@ -22,7 +22,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 - Support for PGN comments and board annotations:
   - `%csl` square highlights
   - `%cal` arrows
-- Temporary lichess-style board circles and arrows with right-click controls
+- Lichess-style board circles and arrows with right-click controls and PGN saving
 - Move annotation glyphs from PGN NAGs:
   - `!`, `?`, `!!`, `??`, `!?`, `?!`
 - Compact study-style notation layout with clickable moves
@@ -63,8 +63,9 @@ You can also add temporary board marks while viewing a game:
 - Right-click a square to toggle a circle.
 - Right-drag from one square to another to toggle an arrow.
 - Use `Command` or `Option` for blue, `Control` for red, and `Control` with `Command` or `Option` for orange.
+- Select a PGN move and click the save icon to write the current board marks into that move comment as `%csl` and `%cal` annotations.
 
-Temporary board marks are visual-only and are not written back to the note or PGN.
+Saved board marks are written back to the note as standard PGN annotations. Orange marks are saved as yellow because `%csl` and `%cal` support green, red, yellow, and blue.
 
 ![Board Marks](/docs/assets/board-marks.png)
 

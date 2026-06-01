@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { buildGameState, parseChessBlock } from '../src/chess/block';
 import {
@@ -687,6 +687,50 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
       'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-blue',
       'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-orange',
     ]);
+  });
+
+  it('enables saving temporary marks for the selected PGN move', async () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    const onSaveAnnotations = vi.fn().mockResolvedValue(undefined);
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      {
+        onSaveAnnotations,
+        renderSaveIcon: button => button.createSpan({ cls: 'save-icon-test' }),
+      },
+    );
+
+    const saveButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__save-annotations');
+    expect(saveButton?.disabled).toBe(true);
+    expect(saveButton?.textContent).toBe('');
+    expect(saveButton?.getAttribute('aria-label')).toBe('Save marks');
+    expect(saveButton?.querySelector('.save-icon-test')).not.toBeNull();
+
+    container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move')?.click();
+    dispatchRightMouse(container, 'e2', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    expect(saveButton?.disabled).toBe(false);
+    saveButton?.click();
+    await Promise.resolve();
+
+    expect(onSaveAnnotations).toHaveBeenCalledWith({
+      nodeId: '0',
+      annotations: [{ kind: 'arrow', color: 'green', from: 'e2', to: 'e4' }],
+    });
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
   });
 
   it('omits placeholder header metadata when event and players are missing from PGN', () => {

@@ -11,6 +11,7 @@ import {
   lastMoveSquares,
   nodePath,
 } from './block';
+import type { SavableBoardAnnotation } from './persistence';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 interface ViewerState {
@@ -25,18 +26,17 @@ interface SquareParts {
 
 type TemporaryAnnotationColor = 'green' | 'blue' | 'red' | 'orange';
 
-type TemporaryBoardAnnotation =
-  | {
-      kind: 'highlight';
-      color: TemporaryAnnotationColor;
-      square: string;
-    }
-  | {
-      kind: 'arrow';
-      color: TemporaryAnnotationColor;
-      from: string;
-      to: string;
-    };
+type TemporaryBoardAnnotation = SavableBoardAnnotation;
+
+export interface SaveBoardAnnotationsRequest {
+  nodeId: string;
+  annotations: SavableBoardAnnotation[];
+}
+
+export interface ChessViewerCallbacks {
+  onSaveAnnotations?: (request: SaveBoardAnnotationsRequest) => Promise<void>;
+  renderSaveIcon?: (button: HTMLButtonElement) => void;
+}
 
 interface PendingTemporaryAnnotation {
   square: string;
@@ -99,6 +99,7 @@ export class ChessViewer {
   private readonly prevButton?: HTMLButtonElement;
   private readonly resetButton?: HTMLButtonElement;
   private readonly nextButton?: HTMLButtonElement;
+  private readonly saveAnnotationsButton?: HTMLButtonElement;
   private readonly squares = new Map<string, SquareParts>();
   private readonly temporaryAnnotations: TemporaryBoardAnnotation[] = [];
   private pendingTemporaryAnnotation: PendingTemporaryAnnotation | null = null;
@@ -108,6 +109,7 @@ export class ChessViewer {
     private readonly containerEl: HTMLElement,
     private readonly gameState: GameState,
     private readonly options: ChessBlockOptions,
+    private readonly callbacks: ChessViewerCallbacks = {},
   ) {
     this.state = {
       currentNodeId: gameState.currentNodeId,
@@ -139,6 +141,15 @@ export class ChessViewer {
         this.render();
       });
       this.nextButton = this.createControlButton('→', () => this.goNext());
+      if (callbacks.onSaveAnnotations) {
+        this.saveAnnotationsButton = this.createControlButton('', () => {
+          void this.saveTemporaryAnnotations();
+        });
+        this.saveAnnotationsButton.addClass('chess-pgn-viewer__save-annotations');
+        this.saveAnnotationsButton.setAttribute('aria-label', 'Save marks');
+        this.saveAnnotationsButton.setAttribute('title', 'Save marks');
+        callbacks.renderSaveIcon?.(this.saveAnnotationsButton);
+      }
     }
 
     const availableWidth = this.getAvailableBoardWidth();
@@ -426,6 +437,7 @@ export class ChessViewer {
     }
 
     this.renderAnnotationState();
+    this.renderControlState();
   }
 
   private sameTemporaryAnnotation(left: TemporaryBoardAnnotation, right: TemporaryBoardAnnotation): boolean {
@@ -459,6 +471,29 @@ export class ChessViewer {
     this.prevButton.disabled = !canGoBack;
     this.resetButton.disabled = this.state.currentNodeId === 'root';
     this.nextButton.disabled = !canGoForward;
+    if (this.saveAnnotationsButton) {
+      this.saveAnnotationsButton.disabled = this.state.currentNodeId === 'root' || this.temporaryAnnotations.length === 0;
+    }
+  }
+
+  private async saveTemporaryAnnotations(): Promise<void> {
+    if (!this.callbacks.onSaveAnnotations || this.state.currentNodeId === 'root' || this.temporaryAnnotations.length === 0) {
+      return;
+    }
+
+    this.saveAnnotationsButton?.setAttribute('aria-busy', 'true');
+    this.saveAnnotationsButton?.setAttribute('disabled', 'true');
+    try {
+      await this.callbacks.onSaveAnnotations({
+        nodeId: this.state.currentNodeId,
+        annotations: this.temporaryAnnotations.map(annotation => ({ ...annotation })),
+      });
+      this.temporaryAnnotations.length = 0;
+      this.renderAnnotationState();
+    } finally {
+      this.saveAnnotationsButton?.removeAttribute('aria-busy');
+      this.renderControlState();
+    }
   }
 
   private renderNotation(): void {
