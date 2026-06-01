@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.8] - 2026-06-01
+
+### Added
+
+- Added temporary lichess-style board circles and arrows with right-click color modifiers.
+
 ## [0.1.7] - 2026-05-30
 
 ### Fixed

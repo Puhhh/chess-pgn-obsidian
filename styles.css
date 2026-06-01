@@ -15,6 +15,7 @@
   --annotation-red: #e56f6f;
   --annotation-yellow: #d7b04d;
   --annotation-blue: #73a0f8;
+  --annotation-orange: #d68a28;
   --controls-height: 4rem;
   background: color-mix(in srgb, var(--background-primary) 84%, #161616);
   border: 1px solid var(--chess-panel-border);
@@ -166,6 +167,11 @@
   border-color: color-mix(in srgb, var(--annotation-blue) 84%, transparent);
 }
 
+.chess-pgn-viewer__annotation--highlight.is-orange {
+  background: color-mix(in srgb, var(--annotation-orange) 12%, transparent);
+  border-color: color-mix(in srgb, var(--annotation-orange) 84%, transparent);
+}
+
 .chess-pgn-viewer__annotation--arrow {
   fill: none;
   stroke-linecap: round;
@@ -195,6 +201,12 @@
 .chess-pgn-viewer__annotation-head.is-blue {
   fill: var(--annotation-blue);
   stroke: var(--annotation-blue);
+}
+
+.chess-pgn-viewer__annotation--arrow.is-orange,
+.chess-pgn-viewer__annotation-head.is-orange {
+  fill: var(--annotation-orange);
+  stroke: var(--annotation-orange);
 }
 
 .chess-pgn-viewer__move-glyph {

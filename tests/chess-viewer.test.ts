@@ -592,6 +592,103 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
     expect(glyphs[0]?.classList.contains('is-interesting')).toBe(true);
   });
 
+  it('toggles temporary board circles with right click', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchRightMouse(container, 'e4', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    const circles = container.querySelectorAll<HTMLElement>('.chess-pgn-viewer__annotation--temporary-highlight');
+    expect(circles).toHaveLength(1);
+    expect(circles[0]?.classList.contains('is-green')).toBe(true);
+    expect(circles[0]?.style.left).toBe('208px');
+    expect(circles[0]?.style.top).toBe('208px');
+
+    dispatchRightMouse(container, 'e4', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-highlight')).toHaveLength(0);
+  });
+
+  it('toggles temporary board arrows with right drag', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchRightMouse(container, 'e2', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    const arrow = container.querySelector<SVGLineElement>('.chess-pgn-viewer__annotation--temporary-arrow');
+    expect(arrow?.classList.contains('is-green')).toBe(true);
+    expect(arrow?.getAttribute('x1')).toBe('234');
+    expect(arrow?.getAttribute('y1')).toBe('338');
+    expect(arrow?.getAttribute('x2')).toBe('234');
+    expect(arrow?.getAttribute('y2')).toBe('234');
+
+    dispatchRightMouse(container, 'e2', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
+  });
+
+  it('uses lichess-style modifier colors for temporary board marks', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchRightMouse(container, 'a1', 'mousedown', { metaKey: true });
+    dispatchRightMouse(container, 'a1', 'mouseup', { metaKey: true });
+    dispatchRightMouse(container, 'b1', 'mousedown', { altKey: true });
+    dispatchRightMouse(container, 'b1', 'mouseup', { altKey: true });
+    dispatchRightMouse(container, 'c1', 'mousedown', { ctrlKey: true });
+    dispatchRightMouse(container, 'c1', 'mouseup', { ctrlKey: true });
+    dispatchRightMouse(container, 'd1', 'mousedown', { ctrlKey: true, altKey: true });
+    dispatchRightMouse(container, 'd1', 'mouseup', { ctrlKey: true, altKey: true });
+    dispatchRightMouse(container, 'e1', 'mousedown', { metaKey: true, altKey: true });
+    dispatchRightMouse(container, 'e1', 'mouseup', { metaKey: true, altKey: true });
+    dispatchRightMouse(container, 'f1', 'mousedown', { ctrlKey: true, metaKey: true });
+    dispatchRightMouse(container, 'f1', 'mouseup', { ctrlKey: true, metaKey: true });
+
+    const marks = Array.from(container.querySelectorAll<HTMLElement>('.chess-pgn-viewer__annotation--temporary-highlight'));
+    expect(marks.map(mark => mark.className)).toEqual([
+      'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-blue',
+      'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-blue',
+      'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-red',
+      'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-orange',
+      'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-blue',
+      'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-orange',
+    ]);
+  });
+
   it('omits placeholder header metadata when event and players are missing from PGN', () => {
     installObsidianDomHelpers();
     installResizeObserver();
@@ -910,4 +1007,26 @@ function whiteOrientationSquareNames(): string[] {
     }
   }
   return result;
+}
+
+function dispatchRightMouse(
+  container: HTMLElement,
+  square: string,
+  type: 'mousedown' | 'mouseup',
+  modifiers: Pick<MouseEventInit, 'altKey' | 'ctrlKey' | 'metaKey'> = {},
+): void {
+  const squareEl = container.querySelector<HTMLElement>(`.chess-pgn-viewer__square[data-square="${square}"]`);
+  if (!squareEl) {
+    throw new Error(`Missing board square ${square}`);
+  }
+
+  squareEl.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      button: 2,
+      buttons: 2,
+      cancelable: true,
+      ...modifiers,
+    }),
+  );
 }

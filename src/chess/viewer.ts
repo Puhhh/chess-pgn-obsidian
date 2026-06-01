@@ -23,6 +23,26 @@ interface SquareParts {
   piece: HTMLSpanElement;
 }
 
+type TemporaryAnnotationColor = 'green' | 'blue' | 'red' | 'orange';
+
+type TemporaryBoardAnnotation =
+  | {
+      kind: 'highlight';
+      color: TemporaryAnnotationColor;
+      square: string;
+    }
+  | {
+      kind: 'arrow';
+      color: TemporaryAnnotationColor;
+      from: string;
+      to: string;
+    };
+
+interface PendingTemporaryAnnotation {
+  square: string;
+  color: TemporaryAnnotationColor;
+}
+
 export interface SquareMetrics {
   left: number;
   top: number;
@@ -80,6 +100,8 @@ export class ChessViewer {
   private readonly resetButton?: HTMLButtonElement;
   private readonly nextButton?: HTMLButtonElement;
   private readonly squares = new Map<string, SquareParts>();
+  private readonly temporaryAnnotations: TemporaryBoardAnnotation[] = [];
+  private pendingTemporaryAnnotation: PendingTemporaryAnnotation | null = null;
   private readonly resizeObserver?: ResizeObserver;
 
   constructor(
@@ -107,6 +129,7 @@ export class ChessViewer {
     this.boardFrameEl.appendChild(this.arrowsSvg);
 
     this.buildBoardShell();
+    this.bindTemporaryAnnotationEvents();
     if (this.gameState.mode === 'pgn') {
       this.controlsEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
       this.notationPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
@@ -144,6 +167,7 @@ export class ChessViewer {
   private buildBoardShell(): void {
     for (const square of this.orderedSquares()) {
       const squareEl = this.boardEl.createDiv({ cls: 'chess-pgn-viewer__square' });
+      squareEl.dataset.square = square;
       squareEl.toggleClass('is-light', this.isLightSquare(square));
       squareEl.toggleClass('is-dark', !squareEl.hasClass('is-light'));
 
@@ -215,6 +239,23 @@ export class ChessViewer {
       this.renderArrow(annotation, geometry);
     }
 
+    for (const annotation of this.temporaryAnnotations) {
+      if (annotation.kind === 'highlight') {
+        const metrics = geometry.squares[annotation.square];
+        if (!metrics) {
+          continue;
+        }
+
+        const highlight = this.highlightsEl.createDiv({
+          cls: `chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-${annotation.color}`,
+        });
+        this.applySquareBounds(highlight, metrics);
+        continue;
+      }
+
+      this.renderArrow(annotation, geometry, 'temporary');
+    }
+
     this.renderMoveGlyph(currentNode, geometry);
   }
 
@@ -237,7 +278,11 @@ export class ChessViewer {
     this.applySquareBounds(glyph, metrics);
   }
 
-  private renderArrow(annotation: Extract<BoardAnnotation, { kind: 'arrow' }>, geometry: BoardGeometry): void {
+  private renderArrow(
+    annotation: Extract<BoardAnnotation | TemporaryBoardAnnotation, { kind: 'arrow' }>,
+    geometry: BoardGeometry,
+    variant: 'pgn' | 'temporary' = 'pgn',
+  ): void {
     const from = geometry.squares[annotation.from];
     const to = geometry.squares[annotation.to];
     if (!from || !to) {
@@ -270,7 +315,17 @@ export class ChessViewer {
     }
 
     const line = this.arrowsSvg.ownerDocument.createElementNS(SVG_NS, 'line');
-    line.setAttribute('class', `chess-pgn-viewer__annotation chess-pgn-viewer__annotation--arrow is-${annotation.color}`);
+    line.setAttribute(
+      'class',
+      [
+        'chess-pgn-viewer__annotation',
+        'chess-pgn-viewer__annotation--arrow',
+        variant === 'temporary' ? 'chess-pgn-viewer__annotation--temporary-arrow' : '',
+        `is-${annotation.color}`,
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
     line.setAttribute('x1', String(from.centerX));
     line.setAttribute('y1', String(from.centerY));
     line.setAttribute('x2', String(to.centerX));
@@ -278,6 +333,115 @@ export class ChessViewer {
     line.setAttribute('stroke-width', String(strokeWidth));
     line.setAttribute('marker-end', `url(#${markerId})`);
     this.arrowsSvg.appendChild(line);
+  }
+
+  private bindTemporaryAnnotationEvents(): void {
+    this.boardEl.addEventListener('contextmenu', event => {
+      event.preventDefault();
+    });
+
+    this.boardEl.addEventListener('mousedown', event => {
+      if (!this.isTemporaryAnnotationMouseEvent(event)) {
+        return;
+      }
+
+      const square = this.squareFromEvent(event);
+      if (!square) {
+        return;
+      }
+
+      event.preventDefault();
+      this.pendingTemporaryAnnotation = {
+        square,
+        color: this.temporaryAnnotationColor(event),
+      };
+    });
+
+    this.boardEl.addEventListener('mouseup', event => {
+      if (!this.pendingTemporaryAnnotation || !this.isTemporaryAnnotationMouseUpEvent(event)) {
+        return;
+      }
+
+      const toSquare = this.squareFromEvent(event);
+      const pending = this.pendingTemporaryAnnotation;
+      this.pendingTemporaryAnnotation = null;
+      if (!toSquare) {
+        return;
+      }
+
+      event.preventDefault();
+      if (toSquare === pending.square) {
+        this.toggleTemporaryAnnotation({
+          kind: 'highlight',
+          color: pending.color,
+          square: toSquare,
+        });
+      } else {
+        this.toggleTemporaryAnnotation({
+          kind: 'arrow',
+          color: pending.color,
+          from: pending.square,
+          to: toSquare,
+        });
+      }
+    });
+  }
+
+  private isTemporaryAnnotationMouseEvent(event: MouseEvent): boolean {
+    return event.button === 2 || (event.button === 0 && event.ctrlKey);
+  }
+
+  private isTemporaryAnnotationMouseUpEvent(event: MouseEvent): boolean {
+    return event.button === 2 || event.button === 0;
+  }
+
+  private squareFromEvent(event: MouseEvent): string | null {
+    const target = event.target instanceof Element ? event.target : null;
+    const squareEl = target?.closest<HTMLElement>('.chess-pgn-viewer__square');
+    return squareEl?.dataset.square ?? null;
+  }
+
+  private temporaryAnnotationColor(event: MouseEvent): TemporaryAnnotationColor {
+    if (event.ctrlKey && (event.altKey || event.metaKey)) {
+      return 'orange';
+    }
+
+    if (event.ctrlKey) {
+      return 'red';
+    }
+
+    if (event.metaKey || event.altKey) {
+      return 'blue';
+    }
+
+    return 'green';
+  }
+
+  private toggleTemporaryAnnotation(annotation: TemporaryBoardAnnotation): void {
+    const index = this.temporaryAnnotations.findIndex(existing => this.sameTemporaryAnnotation(existing, annotation));
+    if (index >= 0) {
+      this.temporaryAnnotations.splice(index, 1);
+    } else {
+      this.temporaryAnnotations.push(annotation);
+    }
+
+    this.renderAnnotationState();
+  }
+
+  private sameTemporaryAnnotation(left: TemporaryBoardAnnotation, right: TemporaryBoardAnnotation): boolean {
+    if (left.kind !== right.kind || left.color !== right.color) {
+      return false;
+    }
+
+    if (left.kind === 'highlight' && right.kind === 'highlight') {
+      return left.square === right.square;
+    }
+
+    if (left.kind === 'arrow' && right.kind === 'arrow') {
+      return left.from === right.from && left.to === right.to;
+    }
+
+    return false;
   }
 
   private renderControlState(): void {
