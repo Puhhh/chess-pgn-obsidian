@@ -130,12 +130,12 @@ GitHub Releases are published by GitHub Actions when a version tag is pushed.
 4. Create and push a version tag:
 
 ```bash
-git tag vX.Y.Z
+git tag X.Y.Z
 git push origin main
-git push origin vX.Y.Z
+git push origin X.Y.Z
 ```
 
-The release workflow verifies that the tag version matches `package.json`, `manifest.json`, and `versions.json`, rebuilds `main.js`, and uploads `manifest.json`, `main.js`, and `styles.css` as release assets.
+The release workflow verifies that the tag version matches `package.json`, `manifest.json`, and `versions.json`, rebuilds `main.js`, and uploads `manifest.json`, `main.js`, and `styles.css` as release assets. Obsidian requires the GitHub release tag to match `manifest.json` exactly, so use `1.0.0`, not `v1.0.0`.
 
 ## Project Structure
 
