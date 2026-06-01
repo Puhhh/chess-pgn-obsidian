@@ -120,6 +120,23 @@ git diff --no-index -- styles.css .obsidian/plugins/chess-pgn-viewer/styles.css
 
 No output means the local Obsidian plugin copy is in sync.
 
+## Release
+
+GitHub Releases are published by GitHub Actions when a version tag is pushed.
+
+1. Update `package.json`, `package-lock.json`, `manifest.json`, `versions.json`, and `CHANGELOG.md`.
+2. Run `npm run lint`, `npm test`, and `npm run build`.
+3. Commit the release changes.
+4. Create and push a version tag:
+
+```bash
+git tag vX.Y.Z
+git push origin main
+git push origin vX.Y.Z
+```
+
+The release workflow verifies that the tag version matches `package.json`, `manifest.json`, and `versions.json`, rebuilds `main.js`, and uploads `manifest.json`, `main.js`, and `styles.css` as release assets.
+
 ## Project Structure
 
 - `src/main.ts` - Obsidian plugin entry point
