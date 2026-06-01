@@ -56,6 +56,16 @@ describe('updatePgnWithSavedAnnotations', () => {
       /\(\s*2\. Bc4 \{\s*\[%csl Gc4\]\s*\}\s*\)/,
     );
   });
+
+  it('removes board annotation tags when saving an empty annotation set', () => {
+    const pgn = '1. e4 {Center [%csl Ge4][%cal Ge2e4]} e5';
+
+    const updated = updatePgnWithSavedAnnotations(pgn, '0', []);
+
+    expect(updated).toMatch(/1\. e4 \{\s*Center\s*\} e5/);
+    expect(updated).not.toContain('[%csl');
+    expect(updated).not.toContain('[%cal');
+  });
 });
 
 describe('updateChessBlockWithSavedAnnotations', () => {

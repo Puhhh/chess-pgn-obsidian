@@ -43,6 +43,11 @@ interface PendingTemporaryAnnotation {
   color: TemporaryAnnotationColor;
 }
 
+interface RemovedSavedAnnotation {
+  nodeId: string;
+  annotation: BoardAnnotation;
+}
+
 export interface SquareMetrics {
   left: number;
   top: number;
@@ -102,6 +107,7 @@ export class ChessViewer {
   private readonly saveAnnotationsButton?: HTMLButtonElement;
   private readonly squares = new Map<string, SquareParts>();
   private readonly temporaryAnnotations: TemporaryBoardAnnotation[] = [];
+  private readonly removedSavedAnnotations: RemovedSavedAnnotation[] = [];
   private pendingTemporaryAnnotation: PendingTemporaryAnnotation | null = null;
   private readonly resizeObserver?: ResizeObserver;
 
@@ -224,7 +230,7 @@ export class ChessViewer {
 
     const geometry = this.state.geometry;
     const currentNode = this.currentNode();
-    const annotations = currentNode?.annotations ?? [];
+    const annotations = this.visibleSavedAnnotations(currentNode);
     if (!geometry || geometry.side === 0) {
       return;
     }
@@ -429,18 +435,42 @@ export class ChessViewer {
   }
 
   private toggleTemporaryAnnotation(annotation: TemporaryBoardAnnotation): void {
-    const index = this.temporaryAnnotations.findIndex(existing => this.sameTemporaryAnnotation(existing, annotation));
-    if (index >= 0) {
-      this.temporaryAnnotations.splice(index, 1);
-    } else {
-      this.temporaryAnnotations.push(annotation);
+    const temporaryIndex = this.temporaryAnnotations.findIndex(existing => this.sameBoardAnnotation(existing, annotation));
+    if (temporaryIndex >= 0) {
+      this.temporaryAnnotations.splice(temporaryIndex, 1);
+      this.renderAnnotationState();
+      this.renderControlState();
+      return;
     }
 
+    const removedIndex = this.removedSavedAnnotations.findIndex(
+      removed => removed.nodeId === this.state.currentNodeId && this.sameBoardAnnotation(removed.annotation, annotation),
+    );
+    if (removedIndex >= 0) {
+      this.removedSavedAnnotations.splice(removedIndex, 1);
+      this.renderAnnotationState();
+      this.renderControlState();
+      return;
+    }
+
+    const currentNode = this.currentNode();
+    const savedAnnotation = currentNode?.annotations.find(existing => this.sameBoardAnnotation(existing, annotation));
+    if (savedAnnotation) {
+      this.removedSavedAnnotations.push({
+        nodeId: this.state.currentNodeId,
+        annotation: savedAnnotation,
+      });
+      this.renderAnnotationState();
+      this.renderControlState();
+      return;
+    }
+
+    this.temporaryAnnotations.push(annotation);
     this.renderAnnotationState();
     this.renderControlState();
   }
 
-  private sameTemporaryAnnotation(left: TemporaryBoardAnnotation, right: TemporaryBoardAnnotation): boolean {
+  private sameBoardAnnotation(left: BoardAnnotation | TemporaryBoardAnnotation, right: BoardAnnotation | TemporaryBoardAnnotation): boolean {
     if (left.kind !== right.kind || left.color !== right.color) {
       return false;
     }
@@ -454,6 +484,23 @@ export class ChessViewer {
     }
 
     return false;
+  }
+
+  private visibleSavedAnnotations(currentNode: GameNode | null): BoardAnnotation[] {
+    if (!currentNode) {
+      return [];
+    }
+
+    return currentNode.annotations.filter(
+      annotation =>
+        !this.removedSavedAnnotations.some(
+          removed => removed.nodeId === currentNode.id && this.sameBoardAnnotation(removed.annotation, annotation),
+        ),
+    );
+  }
+
+  private hasPendingAnnotationChanges(): boolean {
+    return this.temporaryAnnotations.length > 0 || this.removedSavedAnnotations.some(removed => removed.nodeId === this.state.currentNodeId);
   }
 
   private renderControlState(): void {
@@ -472,12 +519,12 @@ export class ChessViewer {
     this.resetButton.disabled = this.state.currentNodeId === 'root';
     this.nextButton.disabled = !canGoForward;
     if (this.saveAnnotationsButton) {
-      this.saveAnnotationsButton.disabled = this.state.currentNodeId === 'root' || this.temporaryAnnotations.length === 0;
+      this.saveAnnotationsButton.disabled = this.state.currentNodeId === 'root' || !this.hasPendingAnnotationChanges();
     }
   }
 
   private async saveTemporaryAnnotations(): Promise<void> {
-    if (!this.callbacks.onSaveAnnotations || this.state.currentNodeId === 'root' || this.temporaryAnnotations.length === 0) {
+    if (!this.callbacks.onSaveAnnotations || this.state.currentNodeId === 'root' || !this.hasPendingAnnotationChanges()) {
       return;
     }
 
@@ -486,13 +533,25 @@ export class ChessViewer {
     try {
       await this.callbacks.onSaveAnnotations({
         nodeId: this.state.currentNodeId,
-        annotations: this.temporaryAnnotations.map(annotation => ({ ...annotation })),
+        annotations: [
+          ...this.visibleSavedAnnotations(this.currentNode()).map(annotation => ({ ...annotation })),
+          ...this.temporaryAnnotations.map(annotation => ({ ...annotation })),
+        ],
       });
       this.temporaryAnnotations.length = 0;
+      this.clearRemovedSavedAnnotationsForCurrentNode();
       this.renderAnnotationState();
     } finally {
       this.saveAnnotationsButton?.removeAttribute('aria-busy');
       this.renderControlState();
+    }
+  }
+
+  private clearRemovedSavedAnnotationsForCurrentNode(): void {
+    for (let index = this.removedSavedAnnotations.length - 1; index >= 0; index--) {
+      if (this.removedSavedAnnotations[index]?.nodeId === this.state.currentNodeId) {
+        this.removedSavedAnnotations.splice(index, 1);
+      }
     }
   }
 

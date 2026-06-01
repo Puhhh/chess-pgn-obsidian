@@ -13,7 +13,7 @@ import { parseSquare } from 'chessops/util';
 
 import { parseChessBlock } from './block';
 
-export type SavableAnnotationColor = 'green' | 'blue' | 'red' | 'orange';
+export type SavableAnnotationColor = 'green' | 'blue' | 'red' | 'yellow' | 'orange';
 
 export type SavableBoardAnnotation =
   | {
