@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { buildGameState, parseChessBlock } from '../src/chess/block';
 import {
@@ -687,6 +687,245 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
       'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-blue',
       'chess-pgn-viewer__annotation chess-pgn-viewer__annotation--highlight chess-pgn-viewer__annotation--temporary-highlight is-orange',
     ]);
+  });
+
+  it('enables saving temporary marks for the selected PGN move', async () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    const onSaveAnnotations = vi.fn().mockResolvedValue(undefined);
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      {
+        onSaveAnnotations,
+        renderSaveIcon: button => button.createSpan({ cls: 'save-icon-test' }),
+      },
+    );
+
+    const saveButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__save-annotations');
+    expect(saveButton?.disabled).toBe(true);
+    expect(saveButton?.textContent).toBe('');
+    expect(saveButton?.getAttribute('aria-label')).toBe('Save marks');
+    expect(saveButton?.querySelector('.save-icon-test')).not.toBeNull();
+
+    container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move')?.click();
+    dispatchRightMouse(container, 'e2', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    expect(saveButton?.disabled).toBe(false);
+    saveButton?.click();
+    await Promise.resolve();
+
+    expect(onSaveAnnotations).toHaveBeenCalledWith({
+      nodeId: '0',
+      annotations: [{ kind: 'arrow', color: 'green', from: 'e2', to: 'e4' }],
+    });
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
+  });
+
+  it('clears unsaved board marks when navigating away from a move', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      {
+        onSaveAnnotations: vi.fn().mockResolvedValue(undefined),
+        renderSaveIcon: button => button.createSpan({ cls: 'save-icon-test' }),
+      },
+    );
+
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+    const controlButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__control'));
+    const saveButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__save-annotations');
+
+    moveButtons[0]?.click();
+    dispatchRightMouse(container, 'e4', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+    dispatchRightMouse(container, 'e2', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-highlight')).toHaveLength(1);
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(1);
+    expect(saveButton?.disabled).toBe(false);
+
+    moveButtons[1]?.click();
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-highlight')).toHaveLength(0);
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
+    expect(saveButton?.disabled).toBe(true);
+
+    controlButtons[0]?.click();
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-highlight')).toHaveLength(0);
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
+    expect(saveButton?.disabled).toBe(true);
+  });
+
+  it('can start from a saved active move after markdown rerender', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 {Center [%csl Ge4]} e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      { initialNodeId: '0' },
+    );
+
+    const activeMove = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move.is-active');
+    const e4Piece = container.querySelector<HTMLElement>('.chess-pgn-viewer__square[data-square="e4"] .chess-pgn-viewer__piece');
+    const e2Piece = container.querySelector<HTMLElement>('.chess-pgn-viewer__square[data-square="e2"] .chess-pgn-viewer__piece');
+
+    expect(activeMove?.textContent).toBe('1. e4');
+    expect(e4Piece?.classList.contains('is-white')).toBe(true);
+    expect(e2Piece?.classList.contains('is-white')).toBe(false);
+  });
+
+  it('toggles saved board circles off when drawing the same circle again', async () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 {Center [%csl Ge4]} e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    const onSaveAnnotations = vi.fn().mockResolvedValue(undefined);
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      {
+        onSaveAnnotations,
+        renderSaveIcon: button => button.createSpan({ cls: 'save-icon-test' }),
+      },
+    );
+
+    container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move')?.click();
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--highlight')).toHaveLength(1);
+
+    dispatchRightMouse(container, 'e4', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    const saveButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__save-annotations');
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--highlight')).toHaveLength(0);
+    expect(saveButton?.disabled).toBe(false);
+
+    saveButton?.click();
+    await Promise.resolve();
+
+    expect(onSaveAnnotations).toHaveBeenCalledWith({
+      nodeId: '0',
+      annotations: [],
+    });
+  });
+
+  it('toggles saved board arrows off when drawing the same arrow again', async () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 {Center [%cal Ge2e4]} e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    const onSaveAnnotations = vi.fn().mockResolvedValue(undefined);
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      {
+        onSaveAnnotations,
+        renderSaveIcon: button => button.createSpan({ cls: 'save-icon-test' }),
+      },
+    );
+
+    container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move')?.click();
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--arrow')).toHaveLength(1);
+
+    dispatchRightMouse(container, 'e2', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    const saveButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__save-annotations');
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--arrow')).toHaveLength(0);
+    expect(saveButton?.disabled).toBe(false);
+
+    saveButton?.click();
+    await Promise.resolve();
+
+    expect(onSaveAnnotations).toHaveBeenCalledWith({
+      nodeId: '0',
+      annotations: [],
+    });
+  });
+
+  it('restores a saved board mark when toggling the same saved mark twice', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 {Center [%csl Ge4]} e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    const onSaveAnnotations = vi.fn().mockResolvedValue(undefined);
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      {
+        onSaveAnnotations,
+        renderSaveIcon: button => button.createSpan({ cls: 'save-icon-test' }),
+      },
+    );
+
+    container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move')?.click();
+    dispatchRightMouse(container, 'e4', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+    dispatchRightMouse(container, 'e4', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    const saveButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__save-annotations');
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--highlight')).toHaveLength(1);
+    expect(saveButton?.disabled).toBe(true);
   });
 
   it('omits placeholder header metadata when event and players are missing from PGN', () => {

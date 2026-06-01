@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.9] - 2026-06-01
+
+### Added
+
+- Added saving board circles and arrows back into PGN comments.
+
+### Fixed
+
+- Matched lichess toggling for saved board circles and arrows.
+- Preserved the active move after saving board annotations.
+- Cleared unsaved board marks when navigating to another move.
+
 ## [0.1.8] - 2026-06-01
 
 ### Added
