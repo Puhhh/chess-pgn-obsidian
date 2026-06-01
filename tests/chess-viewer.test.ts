@@ -733,6 +733,55 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
     expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
   });
 
+  it('clears unsaved board marks when navigating away from a move', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      {
+        onSaveAnnotations: vi.fn().mockResolvedValue(undefined),
+        renderSaveIcon: button => button.createSpan({ cls: 'save-icon-test' }),
+      },
+    );
+
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+    const controlButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__control'));
+    const saveButton = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__save-annotations');
+
+    moveButtons[0]?.click();
+    dispatchRightMouse(container, 'e4', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+    dispatchRightMouse(container, 'e2', 'mousedown');
+    dispatchRightMouse(container, 'e4', 'mouseup');
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-highlight')).toHaveLength(1);
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(1);
+    expect(saveButton?.disabled).toBe(false);
+
+    moveButtons[1]?.click();
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-highlight')).toHaveLength(0);
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
+    expect(saveButton?.disabled).toBe(true);
+
+    controlButtons[0]?.click();
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-highlight')).toHaveLength(0);
+    expect(container.querySelectorAll('.chess-pgn-viewer__annotation--temporary-arrow')).toHaveLength(0);
+    expect(saveButton?.disabled).toBe(true);
+  });
+
   it('can start from a saved active move after markdown rerender', () => {
     installObsidianDomHelpers();
     installResizeObserver();

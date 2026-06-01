@@ -143,10 +143,7 @@ export class ChessViewer {
       this.controlsEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
       this.notationPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
       this.prevButton = this.createControlButton('←', () => this.goPrevious());
-      this.resetButton = this.createControlButton('•', () => {
-        this.state.currentNodeId = 'root';
-        this.render();
-      });
+      this.resetButton = this.createControlButton('•', () => this.navigateToNode('root'));
       this.nextButton = this.createControlButton('→', () => this.goNext());
       if (callbacks.onSaveAnnotations) {
         this.saveAnnotationsButton = this.createControlButton('', () => {
@@ -696,8 +693,7 @@ export class ChessViewer {
     button.createSpan({ cls: 'chess-pgn-viewer__move-text', text: move.label });
     button.toggleClass('is-active', this.state.currentNodeId === move.id);
     button.addEventListener('click', () => {
-      this.state.currentNodeId = move.id;
-      this.render();
+      this.navigateToNode(move.id);
     });
     return button;
   }
@@ -740,8 +736,7 @@ export class ChessViewer {
       return;
     }
 
-    this.state.currentNodeId = previousId;
-    this.render();
+    this.navigateToNode(previousId);
   }
 
   private goNext(): void {
@@ -752,8 +747,23 @@ export class ChessViewer {
       return;
     }
 
-    this.state.currentNodeId = nextId;
+    this.navigateToNode(nextId);
+  }
+
+  private navigateToNode(nodeId: string): void {
+    if (nodeId === this.state.currentNodeId) {
+      return;
+    }
+
+    this.clearUnsavedAnnotationChangesForCurrentNode();
+    this.state.currentNodeId = nodeId;
     this.render();
+  }
+
+  private clearUnsavedAnnotationChangesForCurrentNode(): void {
+    this.temporaryAnnotations.length = 0;
+    this.pendingTemporaryAnnotation = null;
+    this.clearRemovedSavedAnnotationsForCurrentNode();
   }
 
   private applyBoardGeometry(availableWidth: number): void {
