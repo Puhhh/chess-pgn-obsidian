@@ -1,7 +1,7 @@
 # Chess PGN Viewer
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![Version](https://img.shields.io/badge/version-0.1.7-blue)](./manifest.json)
+[![Version](https://img.shields.io/badge/version-0.1.8-blue)](./manifest.json)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.8%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
@@ -22,6 +22,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 - Support for PGN comments and board annotations:
   - `%csl` square highlights
   - `%cal` arrows
+- Temporary lichess-style board circles and arrows with right-click controls
 - Move annotation glyphs from PGN NAGs:
   - `!`, `?`, `!!`, `??`, `!?`, `?!`
 - Compact study-style notation layout with clickable moves
@@ -56,6 +57,16 @@ showVariations: true
 ```
 
 ![Training Game](/docs/assets/training-game.png)
+
+You can also add temporary board marks while viewing a game:
+
+- Right-click a square to toggle a circle.
+- Right-drag from one square to another to toggle an arrow.
+- Use `Command` or `Option` for blue, `Control` for red, and `Control` with `Command` or `Option` for orange.
+
+Temporary board marks are visual-only and are not written back to the note or PGN.
+
+![Board Marks](/docs/assets/board-marks.png)
 
 For a static position, use either `fen:`:
 
