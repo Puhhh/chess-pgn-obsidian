@@ -226,7 +226,7 @@ export function buildGameState(pgn: string): GameState {
 
   // chessops skips syntactically invalid tokens, so add a small guard for
   // obviously broken notation that produced a truncated game tree.
-  if (trimmed.includes('???')) {
+  if (hasUnsupportedUnknownMoveToken(trimmed)) {
     throw new Error('Invalid PGN: unsupported token near ???');
   }
 
@@ -282,6 +282,15 @@ function isRawFenInput(source: string): boolean {
   }
 
   return source.includes('/') && source.trim().split(/\s+/).length >= 4;
+}
+
+function hasUnsupportedUnknownMoveToken(source: string): boolean {
+  const movetext = source
+    .replace(/^\s*\[[^\]\r\n]*\]\s*$/gm, '')
+    .replace(/\{[^}]*\}/g, '')
+    .replace(/;[^\r\n]*/g, '');
+
+  return /(^|[\s()])\?\?\?(?=$|[\s()])/.test(movetext);
 }
 
 export function boardPiecesFromFen(fen: string): BoardPiece[] {
