@@ -68,6 +68,7 @@
   grid-template-columns: repeat(8, minmax(0, 1fr));
   height: var(--board-side, auto);
   position: relative;
+  touch-action: none;
   width: var(--board-side, auto);
   z-index: 1;
 }
@@ -126,12 +127,35 @@
 
 .chess-pgn-viewer__piece {
   align-items: center;
+  cursor: grab;
   display: inline-flex;
   height: calc(var(--square-size, 52px) * 0.9);
   justify-content: center;
   position: relative;
+  touch-action: none;
   width: calc(var(--square-size, 52px) * 0.9);
   z-index: 1;
+}
+
+.chess-pgn-viewer.is-piece-dragging .chess-pgn-viewer__piece {
+  cursor: grabbing;
+}
+
+.chess-pgn-viewer__square.is-piece-drag-source .chess-pgn-viewer__piece {
+  opacity: 0.24;
+}
+
+.chess-pgn-viewer__piece-drag-preview {
+  align-items: center;
+  display: inline-flex;
+  height: calc(var(--square-size, 52px) * 0.9);
+  justify-content: center;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: calc(var(--square-size, 52px) * 0.9);
+  z-index: 5;
 }
 
 .chess-pgn-viewer__piece-svg {

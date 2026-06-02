@@ -16,7 +16,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Features
 
-- Interactive chess board with previous, next, and reset navigation
+- Interactive chess board with previous, next, reset, and drag-to-move navigation
 - PGN parsing with mainline moves and nested variations
 - Static FEN position rendering
 - Support for PGN comments and board annotations:
@@ -57,6 +57,8 @@ showVariations: true
 ```
 
 ![Training Game](/docs/assets/training-game.png)
+
+Drag a piece to its recorded destination square to navigate through the PGN from the board. Drag navigation follows the mainline first, then matching variations. It does not edit the PGN or create new moves.
 
 You can also add temporary board marks while viewing a game:
 

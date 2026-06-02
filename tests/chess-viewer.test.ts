@@ -928,6 +928,160 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
     expect(saveButton?.disabled).toBe(true);
   });
 
+  it('navigates to the next mainline move when dragging a piece to its recorded destination', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchPieceDrag(container, 'e2', 'e4');
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1. e4');
+    expect(
+      container
+        .querySelector<HTMLElement>('.chess-pgn-viewer__square[data-square="e4"] .chess-pgn-viewer__piece')
+        ?.classList.contains('is-white'),
+    ).toBe(true);
+  });
+
+  it('ignores piece drags that do not match a recorded continuation', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchPieceDrag(container, 'e2', 'e3');
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')).toBeNull();
+    expect(
+      container
+        .querySelector<HTMLElement>('.chess-pgn-viewer__square[data-square="e2"] .chess-pgn-viewer__piece')
+        ?.classList.contains('is-white'),
+    ).toBe(true);
+  });
+
+  it('keeps primary-button drag navigation available with non-control modifiers', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchPieceDrag(container, 'e2', 'e4', { altKey: true, metaKey: true });
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1. e4');
+  });
+
+  it('does not start drag navigation from control-left input reserved for board marks', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchPieceDrag(container, 'e2', 'e4', { ctrlKey: true });
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')).toBeNull();
+  });
+
+  it('prefers the mainline move when a variation has the same dragged squares', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 (1. e4 c5) e5');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchPieceDrag(container, 'e2', 'e4');
+
+    const activeMove = container.querySelector<HTMLElement>('.chess-pgn-viewer__move.is-active');
+    expect(activeMove?.textContent).toBe('1. e4');
+    expect(activeMove?.classList.contains('chess-pgn-viewer__move--variation')).toBe(false);
+  });
+
+  it('navigates to a variation when the dragged move is not the mainline continuation', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 (2. Bc4 Bc5) Nc6');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const moveButtons = Array.from(container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move'));
+    moveButtons[1]?.click();
+    dispatchPieceDrag(container, 'f1', 'c4');
+
+    const activeMove = container.querySelector<HTMLElement>('.chess-pgn-viewer__move.is-active');
+    expect(activeMove?.textContent).toBe('2. Bc4');
+    expect(activeMove?.classList.contains('chess-pgn-viewer__move--variation')).toBe(true);
+  });
+
+  it('does not navigate static fen boards when dragging pieces', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    dispatchPieceDrag(container, 'e2', 'e4');
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')).toBeNull();
+    expect(
+      container
+        .querySelector<HTMLElement>('.chess-pgn-viewer__square[data-square="e2"] .chess-pgn-viewer__piece')
+        ?.classList.contains('is-white'),
+    ).toBe(true);
+  });
+
   it('omits placeholder header metadata when event and players are missing from PGN', () => {
     installObsidianDomHelpers();
     installResizeObserver();
@@ -1268,4 +1422,47 @@ function dispatchRightMouse(
       ...modifiers,
     }),
   );
+}
+
+function dispatchPieceDrag(
+  container: HTMLElement,
+  fromSquare: string,
+  toSquare: string,
+  modifiers: Pick<MouseEventInit, 'altKey' | 'ctrlKey' | 'metaKey'> = {},
+): void {
+  const fromSquareEl = container.querySelector<HTMLElement>(`.chess-pgn-viewer__square[data-square="${fromSquare}"]`);
+  const toSquareEl = container.querySelector<HTMLElement>(`.chess-pgn-viewer__square[data-square="${toSquare}"]`);
+  if (!fromSquareEl || !toSquareEl) {
+    throw new Error(`Missing board square for drag ${fromSquare}-${toSquare}`);
+  }
+
+  const pieceEl = fromSquareEl.querySelector<HTMLElement>('.chess-pgn-viewer__piece');
+  if (!pieceEl) {
+    throw new Error(`Missing piece on ${fromSquare}`);
+  }
+
+  pieceEl.dispatchEvent(createPointerMouseEvent('pointerdown', modifiers));
+  toSquareEl.dispatchEvent(createPointerMouseEvent('pointermove', modifiers));
+  toSquareEl.dispatchEvent(createPointerMouseEvent('pointerup', modifiers));
+}
+
+function createPointerMouseEvent(
+  type: 'pointerdown' | 'pointermove' | 'pointerup',
+  modifiers: Pick<MouseEventInit, 'altKey' | 'ctrlKey' | 'metaKey'> = {},
+): MouseEvent {
+  const event = new MouseEvent(type, {
+    bubbles: true,
+    button: 0,
+    buttons: type === 'pointerup' ? 0 : 1,
+    cancelable: true,
+    clientX: 26,
+    clientY: 26,
+    ...modifiers,
+  });
+  Object.defineProperties(event, {
+    pointerId: { value: 1 },
+    pointerType: { value: 'mouse' },
+    isPrimary: { value: true },
+  });
+  return event;
 }

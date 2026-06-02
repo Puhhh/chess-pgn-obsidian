@@ -44,6 +44,13 @@ interface PendingTemporaryAnnotation {
   color: TemporaryAnnotationColor;
 }
 
+interface PendingPieceDrag {
+  pointerId: number;
+  from: string;
+  sourceEl: HTMLDivElement;
+  previewEl: HTMLSpanElement;
+}
+
 interface RemovedSavedAnnotation {
   nodeId: string;
   annotation: BoardAnnotation;
@@ -110,6 +117,7 @@ export class ChessViewer {
   private readonly temporaryAnnotations: TemporaryBoardAnnotation[] = [];
   private readonly removedSavedAnnotations: RemovedSavedAnnotation[] = [];
   private pendingTemporaryAnnotation: PendingTemporaryAnnotation | null = null;
+  private pendingPieceDrag: PendingPieceDrag | null = null;
   private readonly resizeObserver?: ResizeObserver;
 
   constructor(
@@ -139,6 +147,7 @@ export class ChessViewer {
 
     this.buildBoardShell();
     this.bindTemporaryAnnotationEvents();
+    this.bindPieceDragEvents();
     if (this.gameState.mode === 'pgn') {
       this.controlsEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
       this.notationPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
@@ -414,6 +423,157 @@ export class ChessViewer {
     const target = event.target instanceof Element ? event.target : null;
     const squareEl = target?.closest<HTMLElement>('.chess-pgn-viewer__square');
     return squareEl?.dataset.square ?? null;
+  }
+
+  private squareFromPointerEvent(event: PointerEvent): string | null {
+    const squareFromTarget = this.squareFromEvent(event);
+    if (squareFromTarget) {
+      return squareFromTarget;
+    }
+
+    const geometry = this.state.geometry;
+    if (!geometry || geometry.side === 0) {
+      return null;
+    }
+
+    const rect = this.boardEl.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (x < 0 || y < 0 || x >= geometry.side || y >= geometry.side) {
+      return null;
+    }
+
+    const fileIndex = Math.floor(x / geometry.squareSize);
+    const rankIndex = Math.floor(y / geometry.squareSize);
+    return [...this.squares.keys()][rankIndex * 8 + fileIndex] ?? null;
+  }
+
+  private bindPieceDragEvents(): void {
+    this.boardEl.addEventListener('pointerdown', event => {
+      if (!this.isPieceDragStartEvent(event)) {
+        return;
+      }
+
+      const from = this.squareFromPointerEvent(event);
+      if (!from || !this.pieceOnSquare(from)) {
+        return;
+      }
+
+      const source = this.squares.get(from);
+      if (!source) {
+        return;
+      }
+
+      event.preventDefault();
+      this.pendingPieceDrag = {
+        pointerId: event.pointerId,
+        from,
+        sourceEl: source.element,
+        previewEl: this.createPieceDragPreview(source.piece),
+      };
+      source.element.classList.add('is-piece-drag-source');
+      this.rootEl.classList.add('is-piece-dragging');
+      this.movePieceDragPreview(event);
+      this.boardEl.setPointerCapture?.(event.pointerId);
+    });
+
+    this.boardEl.addEventListener('pointermove', event => {
+      if (!this.pendingPieceDrag || this.pendingPieceDrag.pointerId !== event.pointerId) {
+        return;
+      }
+
+      event.preventDefault();
+      this.movePieceDragPreview(event);
+    });
+
+    this.boardEl.addEventListener('pointerup', event => {
+      if (!this.pendingPieceDrag || this.pendingPieceDrag.pointerId !== event.pointerId) {
+        return;
+      }
+
+      event.preventDefault();
+      const from = this.pendingPieceDrag.from;
+      const to = this.squareFromPointerEvent(event);
+      const targetNode = to ? this.findDragNavigationTarget(from, to) : null;
+      this.clearPendingPieceDrag();
+      this.boardEl.releasePointerCapture?.(event.pointerId);
+
+      if (targetNode) {
+        this.navigateToNode(targetNode.id);
+      }
+    });
+
+    this.boardEl.addEventListener('pointercancel', event => {
+      if (!this.pendingPieceDrag || this.pendingPieceDrag.pointerId !== event.pointerId) {
+        return;
+      }
+
+      this.clearPendingPieceDrag();
+      this.boardEl.releasePointerCapture?.(event.pointerId);
+    });
+  }
+
+  private isPieceDragStartEvent(event: PointerEvent): boolean {
+    return (
+      this.gameState.mode === 'pgn' &&
+      event.isPrimary !== false &&
+      event.button === 0 &&
+      !event.ctrlKey
+    );
+  }
+
+  private pieceOnSquare(square: string): BoardPiece | null {
+    const currentNode = this.currentNode();
+    const currentFen = currentNode?.fen ?? this.gameState.root.fen;
+    return boardPiecesFromFen(currentFen).find(piece => piece.square === square) ?? null;
+  }
+
+  private createPieceDragPreview(pieceEl: HTMLElement): HTMLSpanElement {
+    const preview = this.boardFrameEl.createSpan({ cls: 'chess-pgn-viewer__piece-drag-preview' });
+    preview.style.width = pieceEl.style.width;
+    preview.style.height = pieceEl.style.height;
+    preview.append(...Array.from(pieceEl.childNodes).map(node => node.cloneNode(true)));
+    return preview;
+  }
+
+  private movePieceDragPreview(event: PointerEvent): void {
+    const drag = this.pendingPieceDrag;
+    const geometry = this.state.geometry;
+    if (!drag || !geometry) {
+      return;
+    }
+
+    const rect = this.boardFrameEl.getBoundingClientRect();
+    const offset = geometry.squareSize / 2;
+    drag.previewEl.style.transform = `translate(${event.clientX - rect.left - offset}px, ${event.clientY - rect.top - offset}px)`;
+  }
+
+  private clearPendingPieceDrag(): void {
+    if (!this.pendingPieceDrag) {
+      return;
+    }
+
+    this.pendingPieceDrag.sourceEl.classList.remove('is-piece-drag-source');
+    this.pendingPieceDrag.previewEl.remove();
+    this.pendingPieceDrag = null;
+    this.rootEl.classList.remove('is-piece-dragging');
+  }
+
+  private findDragNavigationTarget(from: string, to: string): GameNode | null {
+    if (from === to) {
+      return null;
+    }
+
+    const currentNode = this.currentNode();
+    const currentFen = currentNode?.fen ?? this.gameState.root.fen;
+    const mainlineCandidate =
+      currentNode?.children[0] ?? (this.state.currentNodeId === 'root' ? this.gameState.root.children[0] : null);
+    const candidates = mainlineCandidate ? [mainlineCandidate, ...mainlineCandidate.variations] : [];
+
+    return candidates.find(candidate => {
+      const moveSquares = lastMoveSquares(candidate.fen, currentFen);
+      return moveSquares?.from === from && moveSquares.to === to;
+    }) ?? null;
   }
 
   private temporaryAnnotationColor(event: MouseEvent): TemporaryAnnotationColor {
