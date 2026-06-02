@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.10] - 2026-06-02
+
+### Fixed
+
+- Accepted unknown PGN date placeholders such as `[Date "????.??.??"]` without treating them as invalid move text.
+
 ## [0.1.9] - 2026-06-01
 
 ### Added

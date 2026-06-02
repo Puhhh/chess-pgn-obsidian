@@ -99,6 +99,16 @@ describe('buildGameState', () => {
     expect(state.root.children[0]?.san).toBe('Nf3');
   });
 
+  it('accepts unknown date placeholders in PGN headers', () => {
+    const state = buildGameState(`[Event "Training"]
+[Date "????.??.??"]
+1. e4 e5`);
+
+    expect(state.mode).toBe('pgn');
+    expect(state.headers.Date).toBe('????.??.??');
+    expect(state.root.children[0]?.san).toBe('e4');
+  });
+
   it('builds navigation state with comments and a variation', () => {
     const source = `[Event "Example"]
 1. e4 {King pawn opening} e5 2. Nf3 (2. Bc4 {Bishop opening}) Nc6`;
