@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.11] - 2026-06-02
+
+### Changed
+
+- Added GitHub artifact attestations for release assets.
+
 ## [0.1.10] - 2026-06-02
 
 ### Fixed

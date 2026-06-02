@@ -1,7 +1,7 @@
 # Chess PGN Viewer
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![Version](https://img.shields.io/badge/version-0.1.10-blue)](./manifest.json)
+[![Version](https://img.shields.io/badge/version-0.1.11-blue)](./manifest.json)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.8%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
@@ -136,7 +136,7 @@ git push origin main
 git push origin X.Y.Z
 ```
 
-The release workflow verifies that the tag version matches `package.json`, `manifest.json`, and `versions.json`, rebuilds `main.js`, and uploads `manifest.json`, `main.js`, and `styles.css` as release assets. Obsidian requires the GitHub release tag to match `manifest.json` exactly, so use `1.0.0`, not `v1.0.0`.
+The release workflow verifies that the tag version matches `package.json`, `manifest.json`, and `versions.json`, rebuilds `main.js`, creates GitHub artifact attestations, and uploads `manifest.json`, `main.js`, and `styles.css` as release assets. Obsidian requires the GitHub release tag to match `manifest.json` exactly, so use `1.0.0`, not `v1.0.0`.
 
 ## Project Structure
 
