@@ -154,15 +154,21 @@ export class ChessViewer {
     this.bindTemporaryAnnotationEvents();
     this.bindPieceDragEvents();
     if (this.gameState.mode === 'pgn') {
+      this.rootEl.tabIndex = 0;
+      this.rootEl.addEventListener('keydown', event => this.handleKeyboardNavigation(event));
       this.controlsEl = this.boardPanelEl.createDiv({ cls: 'chess-pgn-viewer__controls' });
       this.notationPanelEl = this.contentEl.createDiv({ cls: 'chess-pgn-viewer__notation-panel' });
       this.prevButton = this.createControlButton('←', () => this.goPrevious());
       this.resetButton = this.createControlButton('•', () => this.navigateToNode('root'));
       this.nextButton = this.createControlButton('→', () => this.goNext());
       if (callbacks.onSaveAnnotations) {
-        this.saveAnnotationsButton = this.createControlButton('', () => {
-          void this.saveTemporaryAnnotations();
-        });
+        this.saveAnnotationsButton = this.createControlButton(
+          '',
+          () => {
+            void this.saveTemporaryAnnotations();
+          },
+          { restoreViewerFocus: false },
+        );
         this.saveAnnotationsButton.addClass('chess-pgn-viewer__save-annotations');
         this.saveAnnotationsButton.setAttribute('aria-label', 'Save marks');
         this.saveAnnotationsButton.setAttribute('title', 'Save marks');
@@ -908,17 +914,40 @@ export class ChessViewer {
     button.toggleClass('is-active', this.state.currentNodeId === move.id);
     button.addEventListener('click', () => {
       this.navigateToNode(move.id);
+      this.rootEl.focus();
     });
     return button;
   }
 
-  private createControlButton(label: string, onClick: () => void): HTMLButtonElement {
+  private createControlButton(
+    label: string,
+    onClick: () => void,
+    options: { restoreViewerFocus?: boolean } = {},
+  ): HTMLButtonElement {
     const button = this.controlsEl!.createEl('button', {
       cls: 'chess-pgn-viewer__control',
       text: label,
     });
-    button.addEventListener('click', onClick);
+    button.addEventListener('click', () => {
+      onClick();
+      if (options.restoreViewerFocus !== false) {
+        this.rootEl.focus();
+      }
+    });
     return button;
+  }
+
+  private handleKeyboardNavigation(event: KeyboardEvent): void {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.goPrevious();
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.goNext();
+    }
   }
 
   private currentNode(): GameNode | undefined {
