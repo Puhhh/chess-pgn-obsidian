@@ -52,8 +52,8 @@ showVariations: true
 
 1. e4 {King pawn opening [%csl Ge4][%cal Ge2e4]}
    e5
-2. Nf3 (2. Bc4 {Italian-style line}) Nc6
-3. Bb5 a6
+2. Nf3 Nc6
+3. Bb5 (3. Bc4 {Italian-style line}) a6
 ```
 
 ![Training Game](/docs/assets/training-game.png)

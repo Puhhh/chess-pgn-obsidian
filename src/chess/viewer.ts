@@ -51,6 +51,11 @@ interface PendingPieceDrag {
   previewEl: HTMLSpanElement;
 }
 
+interface DragNavigationCandidate {
+  node: GameNode;
+  previousFen: string;
+}
+
 interface RemovedSavedAnnotation {
   nodeId: string;
   annotation: BoardAnnotation;
@@ -566,14 +571,63 @@ export class ChessViewer {
 
     const currentNode = this.currentNode();
     const currentFen = currentNode?.fen ?? this.gameState.root.fen;
-    const mainlineCandidate =
-      currentNode?.children[0] ?? (this.state.currentNodeId === 'root' ? this.gameState.root.children[0] : null);
-    const candidates = mainlineCandidate ? [mainlineCandidate, ...mainlineCandidate.variations] : [];
+    const candidates = this.dragNavigationCandidates(currentNode, currentFen);
 
     return candidates.find(candidate => {
-      const moveSquares = lastMoveSquares(candidate.fen, currentFen);
+      const moveSquares = lastMoveSquares(candidate.node.fen, candidate.previousFen);
       return moveSquares?.from === from && moveSquares.to === to;
-    }) ?? null;
+    })?.node ?? null;
+  }
+
+  private dragNavigationCandidates(currentNode: GameNode | undefined, currentFen: string): DragNavigationCandidate[] {
+    const currentPositionKey = playablePositionKey(currentFen);
+    const candidates: DragNavigationCandidate[] = [];
+    const candidateIds = new Set<string>();
+    const mainlineCandidate =
+      currentNode?.children[0] ?? (this.state.currentNodeId === 'root' ? this.gameState.root.children[0] : null);
+
+    if (mainlineCandidate) {
+      this.addUniqueDragCandidate(candidates, candidateIds, mainlineCandidate, currentFen);
+      mainlineCandidate.variations.forEach(candidate =>
+        this.addUniqueDragCandidate(candidates, candidateIds, candidate, currentFen),
+      );
+    }
+
+    if (currentNode) {
+      const currentParent = this.pgnParentNode(currentNode.id);
+      const currentParentFen = currentParent?.fen ?? this.gameState.root.fen;
+      currentNode.variations.forEach(candidate =>
+        this.addUniqueDragCandidate(candidates, candidateIds, candidate, currentParentFen),
+      );
+    }
+
+    for (const candidate of this.gameState.nodeIndex.values()) {
+      if (candidate.id === 'root') {
+        continue;
+      }
+
+      const parent = this.pgnParentNode(candidate.id);
+      const parentFen = parent?.fen ?? this.gameState.root.fen;
+      if (playablePositionKey(parentFen) === currentPositionKey) {
+        this.addUniqueDragCandidate(candidates, candidateIds, candidate, parentFen);
+      }
+    }
+
+    return candidates;
+  }
+
+  private addUniqueDragCandidate(
+    candidates: DragNavigationCandidate[],
+    candidateIds: Set<string>,
+    node: GameNode,
+    previousFen: string,
+  ): void {
+    if (candidateIds.has(node.id)) {
+      return;
+    }
+
+    candidates.push({ node, previousFen });
+    candidateIds.add(node.id);
   }
 
   private temporaryAnnotationColor(event: MouseEvent): TemporaryAnnotationColor {
@@ -889,6 +943,11 @@ export class ChessViewer {
     return parentId ? this.gameState.nodeIndex.get(parentId) : undefined;
   }
 
+  private pgnParentNode(nodeId: string): GameNode | undefined {
+    const dotIndex = nodeId.lastIndexOf('.');
+    return dotIndex === -1 ? this.gameState.root : this.gameState.nodeIndex.get(nodeId.slice(0, dotIndex));
+  }
+
   private goPrevious(): void {
     const path = nodePath(this.gameState.root, this.state.currentNodeId);
     const previousId = path[path.length - 2];
@@ -1010,6 +1069,10 @@ function createPieceSvg(piece: BoardPiece): SVGSVGElement {
   svg.setAttribute('viewBox', '0 0 45 45');
   svg.setAttribute('aria-hidden', 'true');
   return svg;
+}
+
+function playablePositionKey(fen: string): string {
+  return fen.split(' ').slice(0, 4).join(' ');
 }
 
 const PIECE_SVG_BASE64: Record<BoardPiece['color'], Record<BoardPiece['role'], string>> = {
