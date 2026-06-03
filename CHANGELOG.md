@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.13] - 2026-06-03
+
+### Fixed
+
+- Fixed backward navigation from the first sideline move so it returns to the branch point instead of the replaced mainline move.
+
 ## [0.1.12] - 2026-06-03
 
 ### Added
