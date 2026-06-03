@@ -949,6 +949,12 @@ export class ChessViewer {
   }
 
   private goPrevious(): void {
+    const previousVariationPoint = this.previousVariationPoint(this.state.currentNodeId);
+    if (previousVariationPoint) {
+      this.navigateToNode(previousVariationPoint.id);
+      return;
+    }
+
     const path = nodePath(this.gameState.root, this.state.currentNodeId);
     const previousId = path[path.length - 2];
     if (!previousId) {
@@ -956,6 +962,26 @@ export class ChessViewer {
     }
 
     this.navigateToNode(previousId);
+  }
+
+  private previousVariationPoint(nodeId: string): GameNode | undefined {
+    const anchor = this.variationAnchorNode(this.gameState.root, nodeId);
+    return anchor ? this.parentNode(anchor.id) : undefined;
+  }
+
+  private variationAnchorNode(node: GameNode, variationNodeId: string): GameNode | undefined {
+    if (node.variations.some(variation => variation.id === variationNodeId)) {
+      return node;
+    }
+
+    for (const child of [...node.children, ...node.variations]) {
+      const anchor = this.variationAnchorNode(child, variationNodeId);
+      if (anchor) {
+        return anchor;
+      }
+    }
+
+    return undefined;
   }
 
   private goNext(): void {
