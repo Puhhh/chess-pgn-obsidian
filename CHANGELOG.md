@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.12] - 2026-06-03
+
+### Fixed
+
+- Fixed board drag navigation so matching variation moves can be selected from the board.
+
 ## [0.1.11] - 2026-06-02
 
 ### Changed
