@@ -1320,6 +1320,60 @@ e5
     expect(getNextButton()?.disabled).toBe(true);
   });
 
+  it('returns to the previous variation move when navigating backward inside a sideline', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 (2. Bc4 Bc5) Nc6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const variationButtons = container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move--variation');
+    const getPrevButton = () => container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__control')[0];
+
+    variationButtons[1]?.click();
+    getPrevButton()?.click();
+
+    const activeMove = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move.is-active');
+    expect(activeMove?.textContent).toBe('2. Bc4');
+    expect(activeMove?.classList.contains('chess-pgn-viewer__move--variation')).toBe(true);
+  });
+
+  it('returns to the branch point when navigating backward from the first sideline move', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 (2. Bc4 Bc5) Nc6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const mainlineButtons = container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move:not(.chess-pgn-viewer__move--variation)');
+    const variationButtons = container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move--variation');
+    const getPrevButton = () => container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__control')[0];
+
+    mainlineButtons[2]?.click();
+    variationButtons[0]?.click();
+    getPrevButton()?.click();
+
+    const activeMove = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move.is-active');
+    expect(activeMove?.textContent).toBe('1... e5');
+    expect(activeMove?.classList.contains('chess-pgn-viewer__move--variation')).toBe(false);
+  });
+
   it('preserves notation scroll position when navigating between moves', () => {
     installObsidianDomHelpers();
     installResizeObserver();
