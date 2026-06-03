@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.14] - 2026-06-03
+
+### Added
+
+- Added keyboard navigation with left and right arrow keys for PGN games.
+
+### Fixed
+
+- Kept arrow-key navigation active after clicking move controls or sideline moves.
+
 ## [0.1.13] - 2026-06-03
 
 ### Fixed

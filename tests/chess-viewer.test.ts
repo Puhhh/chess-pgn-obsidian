@@ -1294,6 +1294,80 @@ e5
     expect(getNextButton()?.disabled).toBe(true);
   });
 
+  it('navigates mainline moves with left and right arrow keys when the viewer is focused', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const viewer = container.querySelector<HTMLElement>('.chess-pgn-viewer');
+    const sendArrowKey = (key: 'ArrowLeft' | 'ArrowRight') => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      viewer?.dispatchEvent(event);
+      return event;
+    };
+
+    expect(viewer?.getAttribute('tabindex')).toBe('0');
+
+    expect(sendArrowKey('ArrowRight').defaultPrevented).toBe(true);
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1. e4');
+
+    sendArrowKey('ArrowRight');
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1... e5');
+
+    sendArrowKey('ArrowRight');
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1... e5');
+
+    sendArrowKey('ArrowLeft');
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1. e4');
+  });
+
+  it('keeps keyboard navigation available after the next button reaches the final move', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    document.body.appendChild(container);
+
+    try {
+      new ChessViewer(container, gameState, {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      });
+
+      const viewer = container.querySelector<HTMLElement>('.chess-pgn-viewer');
+      const nextButton = container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__control')[2];
+
+      nextButton?.focus();
+      nextButton?.click();
+      nextButton?.click();
+
+      expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1... e5');
+      expect(nextButton?.disabled).toBe(true);
+      expect(document.activeElement).toBe(viewer);
+
+      document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }));
+
+      expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('1. e4');
+    } finally {
+      container.remove();
+    }
+  });
+
   it('stops next navigation at the end of a variation', () => {
     installObsidianDomHelpers();
     installResizeObserver();
@@ -1318,6 +1392,46 @@ e5
 
     expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('2... Bc5');
     expect(getNextButton()?.disabled).toBe(true);
+  });
+
+  it('navigates variation moves with left and right arrow keys', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 (2. Bc4 Bc5) Nc6');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    document.body.appendChild(container);
+
+    try {
+      new ChessViewer(container, gameState, {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      });
+
+      const viewer = container.querySelector<HTMLElement>('.chess-pgn-viewer');
+      const variationButtons = container.querySelectorAll<HTMLButtonElement>('.chess-pgn-viewer__move--variation');
+      const sendArrowKey = (key: 'ArrowLeft' | 'ArrowRight') => {
+        document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      };
+
+      variationButtons[0]?.click();
+      expect(document.activeElement).toBe(viewer);
+
+      sendArrowKey('ArrowRight');
+
+      const activeVariationMove = container.querySelector<HTMLButtonElement>('.chess-pgn-viewer__move.is-active');
+      expect(activeVariationMove?.textContent).toBe('2... Bc5');
+      expect(activeVariationMove?.classList.contains('chess-pgn-viewer__move--variation')).toBe(true);
+
+      sendArrowKey('ArrowLeft');
+      expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('2. Bc4');
+    } finally {
+      container.remove();
+    }
   });
 
   it('returns to the previous variation move when navigating backward inside a sideline', () => {
