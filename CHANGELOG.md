@@ -8,9 +8,13 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.12] - 2026-06-03
 
+### Added
+
+- Added drag-to-move navigation from the board for recorded PGN moves.
+
 ### Fixed
 
-- Fixed board drag navigation so matching variation moves can be selected from the board.
+- Fixed drag-to-move navigation so matching mainline and variation moves can be selected from the board.
 
 ## [0.1.11] - 2026-06-02
 
