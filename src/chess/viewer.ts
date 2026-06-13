@@ -435,7 +435,34 @@ export class ChessViewer {
     const squareEl = target?.closest<HTMLElement>('.chess-pgn-viewer__square');
     return squareEl?.dataset.square ?? null;
   }
-
+  /**
+  * Converts a visual board-grid coordinate into the corresponding chess square.
+  *
+  * This avoids depending on Map insertion order when translating pointer
+  * coordinates back to board squares. The mapping is calculated explicitly
+  * from the current board orientation.
+  */
+  private squareAtBoardIndex(fileIndex: number, rankIndex: number): string | null {
+    if (fileIndex < 0 || fileIndex > 7 || rankIndex < 0 || rankIndex > 7) {
+      return null;
+    }
+  
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+  
+    const orientedFiles =
+      this.options.orientation === 'black'
+        ? files.slice().reverse()
+        : files;
+  
+    const orientedRanks =
+      this.options.orientation === 'black'
+        ? ranks.slice().reverse()
+        : ranks;
+  
+    return `${orientedFiles[fileIndex]}${orientedRanks[rankIndex]}`;
+  }
+  
   private squareFromPointerEvent(event: PointerEvent): string | null {
     const squareFromTarget = this.squareFromEvent(event);
     if (squareFromTarget) {
@@ -456,7 +483,7 @@ export class ChessViewer {
 
     const fileIndex = Math.floor(x / geometry.squareSize);
     const rankIndex = Math.floor(y / geometry.squareSize);
-    return [...this.squares.keys()][rankIndex * 8 + fileIndex] ?? null;
+    return this.squareAtBoardIndex(fileIndex, rankIndex);
   }
 
   private bindPieceDragEvents(): void {
@@ -1087,8 +1114,21 @@ export class ChessViewer {
   }
 
   private isLightSquare(square: string): boolean {
-    const file = square.charCodeAt(0) - 97;
-    const rank = Number(square[1]);
+    const file = square.charCodeAt(0) - 'a'.charCodeAt(0);
+    
+    /* Chess ranks are one-based: Number(square[1]) is 1 for a1.
+     Two options: 
+     - Convert to zero-based rank so a1 becomes file 0 + rank 0, which is dark.
+     - Subtract 1 from Number(square[1]) to flip the colors.
+
+     * Standard chessboard color parity:
+     * - a1 is dark
+     * - h1 is light
+     * - a8 is light
+     * - h8 is dark
+     */
+    
+    const rank = Number(square[1]) - 1;
     return (file + rank) % 2 === 1;
   }
 

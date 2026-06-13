@@ -14,6 +14,30 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ![Board view](docs/assets/board-view.png)
 
+````
+```chess
+orientation: white
+showMoves: true
+showComments: true
+showVariations: true
+
+[FEN "4K3/4P1k1/8/8/8/8/5R2/r7 w - - 0 1"]
+
+1.Rg2+ Kh7 (1 ... Kf6? 2.Kf8) 2. Rg4 {2) ладья переходит на четвертую
+(если сильнейшая сторона - 
+черные, то на пятую) 
+горизонталь:}
+{3) король освобождает поле
+превращения пешки и идет на
+сближение со своей ладьей:} 
+(2. Re2!) (2. Rd2!) Rf1
+(2… Rd1 3.Kf7 3… Rf1+
+4.Ke6 4… Re1+ 5.Kf6 
+5… Rf1+ 6.Ke5 6… Re1+ 
+7. Re4)
+```
+````
+
 ## Features
 
 - Interactive chess board with previous, next, reset, keyboard, and drag-to-move navigation
@@ -40,6 +64,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 Create a fenced code block with the `chess` language:
 
+````
 ```chess
 orientation: white
 showMoves: true
@@ -55,7 +80,7 @@ showVariations: true
 2. Nf3 Nc6
 3. Bb5 (3. Bc4 {Italian-style line}) a6
 ```
-
+````
 ![Training Game](/docs/assets/training-game.png)
 
 Focus the viewer and use the left and right arrow keys to step backward and forward through moves. You can also drag a piece to its recorded destination square to navigate through the PGN from the board. Drag navigation follows the mainline first, then matching variations. It does not edit the PGN or create new moves.
