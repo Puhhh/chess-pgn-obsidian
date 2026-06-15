@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildGameState,
   buildNotationRows,
+  MAX_CHESS_BLOCK_CHARS,
+  MAX_GAME_NODES,
   parseChessBlock,
 } from '../src/chess/block';
 
@@ -50,6 +52,12 @@ fen: ${fen}`;
     expect(block.fen).toBe(fen);
     expect(block.pgn).toBe('');
     expect(block.warnings).toEqual([]);
+  });
+
+  it('rejects oversized chess block source before parsing options', () => {
+    expect(() => parseChessBlock('1. e4 '.repeat(Math.ceil(MAX_CHESS_BLOCK_CHARS / 6) + 1))).toThrow(
+      /too large/i,
+    );
   });
 });
 
@@ -227,5 +235,21 @@ describe('buildGameState', () => {
 
   it('throws a helpful error for invalid pgn', () => {
     expect(() => buildGameState('1. e4 ???')).toThrow(/invalid pgn/i);
+  });
+
+  it('rejects oversized raw pgn before parsing', () => {
+    expect(() => buildGameState('1. e4 '.repeat(Math.ceil(MAX_CHESS_BLOCK_CHARS / 6) + 1))).toThrow(
+      /too large/i,
+    );
+  });
+
+  it('rejects pgn with too many moves', () => {
+    const moves: string[] = [];
+    for (let moveNumber = 1; moves.length <= MAX_GAME_NODES; moveNumber++) {
+      const [white, black] = moveNumber % 2 === 1 ? ['Nf3', 'Nf6'] : ['Ng1', 'Ng8'];
+      moves.push(`${moveNumber}. ${white} ${black}`);
+    }
+
+    expect(() => buildGameState(moves.join(' '))).toThrow(/too many moves or variations/i);
   });
 });

@@ -106,9 +106,14 @@ const DEFAULT_OPTIONS: ChessBlockOptions = {
   showVariations: true,
 };
 
+export const MAX_CHESS_BLOCK_CHARS = 100_000;
+export const MAX_GAME_NODES = 2_000;
+
 const BOOLEAN_OPTIONS = new Set(['showMoves', 'showComments', 'showVariations']);
 
 export function parseChessBlock(source: string): ParsedChessBlock {
+  assertSafeChessSourceSize(source);
+
   const lines = source.replace(/\r/g, '').split('\n');
   const options: ChessBlockOptions = { ...DEFAULT_OPTIONS };
   const warnings: string[] = [];
@@ -171,6 +176,8 @@ export function parseChessBlock(source: string): ParsedChessBlock {
 }
 
 export function buildGameState(pgn: string): GameState {
+  assertSafeChessSourceSize(pgn);
+
   const trimmed = pgn.trim();
   if (!trimmed) {
     throw new Error('Invalid PGN: empty input');
@@ -212,10 +219,12 @@ export function buildGameState(pgn: string): GameState {
   };
 
   const nodeIndex = new Map<string, GameNode>([['root', root]]);
+  const nodeBudget = { count: 0 };
   root.children = buildMainlineBranch({
     pgnNode: game.moves,
     position,
     nodeIndex,
+    nodeBudget,
     path: [],
     ply: 0,
   });
@@ -337,6 +346,7 @@ interface BuildBranchContext {
   pgnNode: { children: ChildNode<PgnNodeData>[] };
   position: Position;
   nodeIndex: Map<string, GameNode>;
+  nodeBudget: { count: number };
   path: number[];
   ply: number;
 }
@@ -347,9 +357,23 @@ function buildMainlineBranch(context: BuildBranchContext): GameNode[] {
     return [];
   }
 
-  const node = buildNode(mainline, context.position, context.nodeIndex, [...context.path, 0], context.ply);
+  const node = buildNode(
+    mainline,
+    context.position,
+    context.nodeIndex,
+    context.nodeBudget,
+    [...context.path, 0],
+    context.ply,
+  );
   node.variations = siblings.map((variation, index) =>
-    buildNode(variation, context.position.clone(), context.nodeIndex, [...context.path, index + 1], context.ply),
+    buildNode(
+      variation,
+      context.position.clone(),
+      context.nodeIndex,
+      context.nodeBudget,
+      [...context.path, index + 1],
+      context.ply,
+    ),
   );
 
   return [node];
@@ -359,9 +383,15 @@ function buildNode(
   pgnNode: ChildNode<PgnNodeData>,
   position: BuildBranchContext['position'],
   nodeIndex: Map<string, GameNode>,
+  nodeBudget: BuildBranchContext['nodeBudget'],
   path: number[],
   ply: number,
 ): GameNode {
+  nodeBudget.count += 1;
+  if (nodeBudget.count > MAX_GAME_NODES) {
+    throw new Error('Invalid PGN: too many moves or variations');
+  }
+
   const move = parseSan(position, pgnNode.data.san);
   if (!move) {
     throw new Error(`Invalid PGN: illegal or unrecognized move "${pgnNode.data.san}"`);
@@ -389,11 +419,18 @@ function buildNode(
     pgnNode,
     position: nextPosition,
     nodeIndex,
+    nodeBudget,
     path,
     ply: ply + 1,
   });
 
   return node;
+}
+
+function assertSafeChessSourceSize(source: string): void {
+  if (source.length > MAX_CHESS_BLOCK_CHARS) {
+    throw new Error('Chess block is too large to render safely');
+  }
 }
 
 function parseNodeComments(comments: string[] | undefined): Pick<GameNode, 'comment' | 'annotations'> {
