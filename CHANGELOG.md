@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.15] - 2026-06-15
+
+### Changed
+
+- Added release-time dependency audit checks and refreshed the build/test toolchain to patched versions.
+
+### Fixed
+
+- Rejected oversized chess blocks and very large PGN game trees before they can stall Obsidian rendering.
+
 ## [0.1.14] - 2026-06-03
 
 ### Added

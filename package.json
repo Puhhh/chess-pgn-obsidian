@@ -1,6 +1,6 @@
 {
   "name": "obsidian-chess-pgn",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Obsidian plugin for rendering interactive chess PGN games and static FEN positions",
   "license": "GPL-3.0-or-later",
   "main": "main.js",
@@ -14,13 +14,13 @@
   "devDependencies": {
     "@types/node": "^24.9.1",
     "@typescript-eslint/parser": "^8.59.1",
-    "esbuild": "^0.25.11",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.4",
     "eslint-plugin-obsidianmd": "^0.2.8",
     "jsdom": "^26.1.0",
     "obsidian": "^1.8.10",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.9"
   },
   "dependencies": {
     "chessops": "^0.14.2"
