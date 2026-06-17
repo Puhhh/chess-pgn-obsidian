@@ -1,7 +1,7 @@
 # Chess PGN Viewer
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![Version](https://img.shields.io/badge/version-0.1.16-blue)](./manifest.json)
+[![Version](https://img.shields.io/badge/version-0.1.17-blue)](./manifest.json)
 [![Obsidian](https://img.shields.io/badge/Obsidian-1.8%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
@@ -41,6 +41,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 Create a fenced code block with the `chess` language:
 
+````
 ```chess
 orientation: white
 showMoves: true
@@ -56,6 +57,7 @@ showVariations: true
 2. Nf3 Nc6
 3. Bb5 (3. Bc4 {Italian-style line}) a6
 ```
+````
 
 ![Training Game](docs/assets/training-game.png)
 
@@ -74,15 +76,19 @@ Unsaved board marks are temporary for the selected move and are cleared when you
 
 For a static position, use either `fen:`:
 
+````
 ```chess
 fen: r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4
 ```
+````
 
 Or use a standalone `[FEN "..."]` header:
 
+````
 ```chess
 [FEN "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4"]
 ```
+````
 
 ![FEN](docs/assets/fen.png)
 

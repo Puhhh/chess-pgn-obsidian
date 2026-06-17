@@ -1089,7 +1089,7 @@ export class ChessViewer {
   private isLightSquare(square: string): boolean {
     const file = square.charCodeAt(0) - 97;
     const rank = Number(square[1]);
-    return (file + rank) % 2 === 1;
+    return (file + rank - 1) % 2 === 1;
   }
 
   private isBottomRankSquare(square: string): boolean {
