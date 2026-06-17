@@ -440,6 +440,44 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
     expect(rankLabels).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
   });
 
+  it('renders a1 as a dark square in both orientations', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
+    const whiteContainer = document.createElement('div');
+    whiteContainer.dataset.testWidth = '423';
+    new ChessViewer(whiteContainer, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    const blackContainer = document.createElement('div');
+    blackContainer.dataset.testWidth = '423';
+    new ChessViewer(blackContainer, gameState, {
+      orientation: 'black',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    expect(
+      whiteContainer.querySelector('.chess-pgn-viewer__square[data-square="a1"]')?.classList.contains('is-dark'),
+    ).toBe(true);
+    expect(
+      whiteContainer.querySelector('.chess-pgn-viewer__square[data-square="h1"]')?.classList.contains('is-light'),
+    ).toBe(true);
+    expect(
+      blackContainer.querySelector('.chess-pgn-viewer__square[data-square="a1"]')?.classList.contains('is-dark'),
+    ).toBe(true);
+    expect(
+      blackContainer.querySelector('.chess-pgn-viewer__square[data-square="h1"]')?.classList.contains('is-light'),
+    ).toBe(true);
+  });
+
   it('sizes arrow SVG from measured board geometry and renders study-style move rows', () => {
     installObsidianDomHelpers();
     installResizeObserver();

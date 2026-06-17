@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.17] - 2026-06-17
+
+### Fixed
+
+- Corrected board square colors so `a1` renders as a dark square in both orientations.
+
 ## [0.1.16] - 2026-06-17
 
 ### Security
