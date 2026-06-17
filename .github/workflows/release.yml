@@ -32,7 +32,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       - name: Audit release toolchain
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=high
 
       - name: Verify release version
         run: |
