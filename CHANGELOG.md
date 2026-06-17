@@ -6,14 +6,21 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.1.16] - 2026-06-17
+
+### Security
+
+- Tightened the release toolchain dependency audit gate from critical to high severity.
+
 ## [0.1.15] - 2026-06-15
 
 ### Changed
 
-- Added release-time dependency audit checks and refreshed the build/test toolchain to patched versions.
+- Refreshed the build/test toolchain to patched versions.
 
-### Fixed
+### Security
 
+- Added release-time dependency audit checks for production dependencies and the release toolchain.
 - Rejected oversized chess blocks and very large PGN game trees before they can stall Obsidian rendering.
 
 ## [0.1.14] - 2026-06-03
