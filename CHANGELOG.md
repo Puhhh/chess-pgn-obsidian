@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- No unreleased changes yet.
+No unreleased changes yet.
+
+## [0.1.18] - 2026-06-17
+
+### Changed
+
+- Refreshed the README screenshot assets.
 
 ## [0.1.17] - 2026-06-17
 
