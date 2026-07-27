@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes yet.
 
+## [0.1.19] - 2026-07-27
+
+### Fixed
+
+- Allowed static FEN blocks to render syntactically valid positions that are not legal chess positions, including positions without kings.
+
+### Security
+
+- Updated development-tool dependencies following release audit findings.
+- Added a temporary fail-closed release-audit exception for `GHSA-mh99-v99m-4gvg` affecting only development-tool copies of `brace-expansion` versions `1.1.16` and `2.1.2`; the exception expires on 2026-08-10, while the production dependency audit remains strict.
+
 ## [0.1.18] - 2026-06-17
 
 ### Changed
