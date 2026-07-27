@@ -73,8 +73,25 @@ describe('buildGameState', () => {
     expect(state.currentNodeId).toBe('root');
   });
 
-  it('throws a helpful error for invalid raw fen input', () => {
-    expect(() => buildGameState('8/8/8/8/8/8/8/8 w - - 0 1')).toThrow(/invalid fen/i);
+  it('builds a static board state from a syntactically valid position without kings', () => {
+    const diagramFen = '8/pp3ppp/2p1p3/8/3P4/2P5/PP3PPP/8 w - - 0 1';
+
+    const state = buildGameState(diagramFen);
+
+    expect(state.mode).toBe('fen');
+    expect(state.root.fen).toBe(diagramFen);
+    expect(state.root.children).toHaveLength(0);
+  });
+
+  it('builds a static board state from an empty board', () => {
+    const state = buildGameState('8/8/8/8/8/8/8/8 w - - 0 1');
+
+    expect(state.mode).toBe('fen');
+    expect(state.root.fen).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
+  });
+
+  it('throws a helpful error for syntactically invalid raw fen input', () => {
+    expect(() => buildGameState('8/8/8/8/8/8/8/7 w - - 0 1')).toThrow(/invalid fen/i);
   });
 
   it('builds a static board state from explicit fen option content', () => {
@@ -86,6 +103,16 @@ describe('buildGameState', () => {
     expect(state.root.children).toHaveLength(0);
   });
 
+  it('builds a static board state without kings from explicit fen option content', () => {
+    const diagramFen = '8/pp3ppp/2p1p3/8/3P4/2P5/PP3PPP/8 w - - 0 1';
+    const block = parseChessBlock(`fen: ${diagramFen}`);
+
+    const state = buildGameState(block.fen ?? block.pgn);
+
+    expect(state.mode).toBe('fen');
+    expect(state.root.fen).toBe(diagramFen);
+  });
+
   it('builds a static board state from a standalone fen header', () => {
     const state = buildGameState(`[FEN "${fen}"]`);
 
@@ -94,8 +121,23 @@ describe('buildGameState', () => {
     expect(state.root.children).toHaveLength(0);
   });
 
+  it('builds a static board state without kings from a standalone fen header', () => {
+    const diagramFen = '8/pp3ppp/2p1p3/8/3P4/2P5/PP3PPP/8 w - - 0 1';
+
+    const state = buildGameState(`[FEN "${diagramFen}"]`);
+
+    expect(state.mode).toBe('fen');
+    expect(state.root.fen).toBe(diagramFen);
+  });
+
   it('throws a helpful error for an invalid standalone fen header', () => {
-    expect(() => buildGameState('[FEN "8/8/8/8/8/8/8/8 w - - 0 1"]')).toThrow(/invalid fen/i);
+    expect(() => buildGameState('[FEN "8/8/8/8/8/8/8/7 w - - 0 1"]')).toThrow(/invalid fen/i);
+  });
+
+  it('rejects unsupported chess variant syntax in static fen input', () => {
+    expect(() => buildGameState('8/8/8/8/8/8/8/K6k[P] w - - 0 1')).toThrow(/unsupported variant syntax/i);
+    expect(() => buildGameState('8/8/8/8/8/8/8/Q~6k w - - 0 1')).toThrow(/unsupported variant syntax/i);
+    expect(() => buildGameState('8/8/8/8/8/8/8/K6k w - - 3+3 0 1')).toThrow(/unsupported variant syntax/i);
   });
 
   it('keeps pgn with a fen header navigable as pgn', () => {
@@ -105,6 +147,14 @@ describe('buildGameState', () => {
 
     expect(state.mode).toBe('pgn');
     expect(state.root.children[0]?.san).toBe('Nf3');
+  });
+
+  it('keeps legality checks for pgn moves that start from a fen without kings', () => {
+    expect(() =>
+      buildGameState(`[SetUp "1"]
+[FEN "8/pp3ppp/2p1p3/8/3P4/2P5/PP3PPP/8 w - - 0 1"]
+1. d5`),
+    ).toThrow(/invalid pgn.*ERR_KINGS/i);
   });
 
   it('accepts unknown date placeholders in PGN headers', () => {

@@ -90,6 +90,8 @@ Or use a standalone `[FEN "..."]` header:
 ```
 ````
 
+Static FEN blocks accept positions that are not legal chess positions, including positions without kings, as long as the FEN syntax is valid.
+
 ![FEN](docs/assets/fen.png)
 
 ### Supported block options
