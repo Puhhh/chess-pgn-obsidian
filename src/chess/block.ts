@@ -1,5 +1,5 @@
 import { makeFen, parseFen } from 'chessops/fen';
-import { Chess, type Position } from 'chessops/chess';
+import type { Position } from 'chessops/chess';
 import {
   type ChildNode,
   type CommentShapeColor,
@@ -255,12 +255,10 @@ function buildFenState(fen: string): GameState {
       throw new Error(`Invalid FEN: ${error.message}`);
     },
   );
-  const position = Chess.fromSetup(setup).unwrap(
-    value => value,
-    error => {
-      throw new Error(`Invalid FEN: ${error.message}`);
-    },
-  );
+
+  if (setup.pockets || setup.remainingChecks || setup.board.promoted.nonEmpty()) {
+    throw new Error('Invalid FEN: unsupported variant syntax');
+  }
 
   const root: GameNode = {
     id: 'root',
@@ -268,7 +266,7 @@ function buildFenState(fen: string): GameState {
     ply: 0,
     moveNumber: null,
     color: null,
-    fen: makeFen(position.toSetup()),
+    fen: makeFen(setup),
     annotation: null,
     comment: null,
     annotations: [],

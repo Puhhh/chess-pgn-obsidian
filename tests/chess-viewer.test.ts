@@ -354,6 +354,28 @@ describe('ChessViewer', () => {
     expect(container.querySelector('.chess-pgn-viewer__notation-panel')).toBeNull();
   });
 
+  it('renders a static pawn-structure fen without kings', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('8/pp3ppp/2p1p3/8/3P4/2P5/PP3PPP/8 w - - 0 1');
+
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(container, gameState, {
+      orientation: 'white',
+      showMoves: true,
+      showComments: true,
+      showVariations: true,
+    });
+
+    expect(container.querySelectorAll('.chess-pgn-viewer__square')).toHaveLength(64);
+    expect(container.querySelectorAll('.chess-pgn-viewer__piece.is-white svg')).toHaveLength(7);
+    expect(container.querySelectorAll('.chess-pgn-viewer__piece.is-black svg')).toHaveLength(7);
+    expect(container.querySelector('.chess-pgn-viewer__controls')).toBeNull();
+    expect(container.querySelector('.chess-pgn-viewer__notation-panel')).toBeNull();
+  });
+
   it('renders explicit fen option blocks as board-only positions', () => {
     installObsidianDomHelpers();
     installResizeObserver();

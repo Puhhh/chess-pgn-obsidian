@@ -1,10 +1,11 @@
 {
   "name": "obsidian-chess-pgn",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "Obsidian plugin for rendering interactive chess PGN games and static FEN positions",
   "license": "GPL-3.0-or-later",
   "main": "main.js",
   "scripts": {
+    "audit:release": "node scripts/audit-release.mjs",
     "build": "node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
     "lint": "eslint src",
