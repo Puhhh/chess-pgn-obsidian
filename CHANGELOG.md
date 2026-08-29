@@ -6,6 +6,20 @@ All notable changes to this project will be documented in this file.
 
 No unreleased changes yet.
 
+## [0.1.20] - 2026-08-29
+
+### Added
+
+- Added a `startMove` chess block option for opening a full PGN at a specific mainline move.
+
+### Fixed
+
+- Correctly numbered moves in PGN games that start from a FEN position with a non-default move number or Black to move.
+
+### Security
+
+- Updated the development dependency lockfile to resolve current high-severity release-toolchain advisories.
+
 ## [0.1.19] - 2026-07-27
 
 ### Fixed

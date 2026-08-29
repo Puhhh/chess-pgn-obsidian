@@ -1,6 +1,7 @@
 import { MarkdownPostProcessorContext, Notice, Plugin, setIcon } from 'obsidian';
 
 import { buildGameState, parseChessBlock } from './chess/block';
+import { resolveInitialPosition, type SavedViewerPosition } from './chess/initial-position';
 import {
   replaceChessBlockSection,
   updateChessBlockWithSavedAnnotations,
@@ -8,7 +9,7 @@ import {
 import { ChessViewer, type SaveBoardAnnotationsRequest } from './chess/viewer';
 
 export default class ChessPgnViewerPlugin extends Plugin {
-  private readonly savedNodeIds = new Map<string, string>();
+  private readonly savedNodeIds = new Map<string, SavedViewerPosition>();
 
   onload(): void {
     this.registerMarkdownCodeBlockProcessor('chess', (source, el, ctx) => {
@@ -25,16 +26,22 @@ export default class ChessPgnViewerPlugin extends Plugin {
 
       const state = buildGameState(parsed.fen ?? parsed.pgn);
       const blockKey = this.blockKey(el, ctx);
-      const initialNodeId = blockKey ? this.savedNodeIds.get(blockKey) : undefined;
-      if (initialNodeId && !state.nodeIndex.has(initialNodeId)) {
+      const savedPosition = blockKey ? this.savedNodeIds.get(blockKey) : undefined;
+      const initialPosition = resolveInitialPosition(state, source, parsed.options.startMove, savedPosition);
+      if (blockKey && initialPosition.discardSavedPosition) {
         this.savedNodeIds.delete(blockKey);
+      }
+      if (initialPosition.unmatchedStartMove) {
+        console.warn('[Chess PGN Viewer] startMove does not match a move on the PGN main line', {
+          file: ctx.sourcePath,
+        });
       }
 
       el.addClass('chess-pgn-viewer-root');
       new ChessViewer(el, state, parsed.options, {
         onSaveAnnotations: request => this.saveBoardAnnotations(el, ctx, request),
         renderSaveIcon: button => setIcon(button, 'save'),
-        initialNodeId: initialNodeId && state.nodeIndex.has(initialNodeId) ? initialNodeId : undefined,
+        initialNodeId: initialPosition.nodeId,
       });
     } catch (error) {
       this.renderErrorState(el, error);
@@ -57,6 +64,7 @@ export default class ChessPgnViewerPlugin extends Plugin {
     }
 
     try {
+      let savedSource: string | undefined;
       await this.app.vault.process(file, documentText => {
         const lines = documentText.split('\n');
         const currentSource = lines.slice(sectionInfo.lineStart + 1, sectionInfo.lineEnd).join('\n');
@@ -65,9 +73,15 @@ export default class ChessPgnViewerPlugin extends Plugin {
           request.nodeId,
           request.annotations,
         );
+        savedSource = updatedSource;
         return replaceChessBlockSection(documentText, sectionInfo.lineStart, sectionInfo.lineEnd, updatedSource);
       });
-      this.savedNodeIds.set(this.blockKeyFromSection(ctx.sourcePath, sectionInfo.lineStart), request.nodeId);
+      if (savedSource !== undefined) {
+        this.savedNodeIds.set(this.blockKeyFromSection(ctx.sourcePath, sectionInfo.lineStart), {
+          nodeId: request.nodeId,
+          source: savedSource,
+        });
+      }
       new Notice('Chess board annotations saved.');
     } catch (error) {
       throw this.noticeSaveError(error instanceof Error ? error.message : 'Cannot save chess annotations.');

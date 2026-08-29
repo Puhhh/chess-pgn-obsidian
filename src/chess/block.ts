@@ -13,11 +13,17 @@ import { makeSquare } from 'chessops/util';
 
 export type Orientation = 'white' | 'black';
 
+export interface StartMove {
+  moveNumber: number;
+  color: 'white' | 'black';
+}
+
 export interface ChessBlockOptions {
   orientation: Orientation;
   showMoves: boolean;
   showComments: boolean;
   showVariations: boolean;
+  startMove?: StartMove;
 }
 
 export interface ParsedChessBlock {
@@ -149,6 +155,16 @@ export function parseChessBlock(source: string): ParsedChessBlock {
           continue;
         }
 
+        if (rawKey === 'startMove') {
+          const startMove = parseStartMove(value);
+          if (startMove) {
+            options.startMove = startMove;
+          } else {
+            warnings.push('Invalid startMove option: expected a positive move number such as 5 or 5...');
+          }
+          continue;
+        }
+
         if (BOOLEAN_OPTIONS.has(rawKey)) {
           if (value === 'true' || value === 'false') {
             options[key] = value === 'true' as never;
@@ -172,6 +188,23 @@ export function parseChessBlock(source: string): ParsedChessBlock {
     pgn: pgnLines.join('\n').trim(),
     fen,
     warnings,
+  };
+}
+
+function parseStartMove(value: string): StartMove | undefined {
+  const match = value.match(/^([1-9]\d*)(\.\.\.)?$/);
+  if (!match) {
+    return undefined;
+  }
+
+  const moveNumber = Number(match[1]);
+  if (!Number.isSafeInteger(moveNumber)) {
+    return undefined;
+  }
+
+  return {
+    moveNumber,
+    color: match[2] ? 'black' : 'white',
   };
 }
 
@@ -246,6 +279,22 @@ export function buildGameState(pgn: string): GameState {
     currentNodeId: 'root',
     nodeIndex,
   };
+}
+
+export function resolveStartMoveNodeId(state: GameState, startMove: StartMove): string | undefined {
+  if (state.mode !== 'pgn') {
+    return undefined;
+  }
+
+  let current = state.root.children[0];
+  while (current) {
+    if (current.moveNumber === startMove.moveNumber && current.color === startMove.color) {
+      return current.id;
+    }
+    current = current.children[0];
+  }
+
+  return undefined;
 }
 
 function buildFenState(fen: string): GameState {
@@ -402,8 +451,8 @@ function buildNode(
     id: path.join('.'),
     san: pgnNode.data.san,
     ply: ply + 1,
-    moveNumber: Math.floor(ply / 2) + 1,
-    color: ply % 2 === 0 ? 'white' : 'black',
+    moveNumber: position.fullmoves,
+    color: position.turn,
     fen: makeFen(nextPosition.toSetup()),
     annotation: parseMoveAnnotation(pgnNode.data.nags),
     ...parseNodeComments([...(pgnNode.data.startingComments ?? []), ...(pgnNode.data.comments ?? [])]),

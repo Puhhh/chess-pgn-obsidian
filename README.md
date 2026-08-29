@@ -98,11 +98,14 @@ Static FEN blocks accept positions that are not legal chess positions, including
 
 - `orientation: white | black`
 - `fen: <FEN>`
+- `startMove: <move number>` (for example, `5` after White's move or `5...` after Black's move)
 - `showMoves: true | false`
 - `showComments: true | false`
 - `showVariations: true | false`
 
 If a block option is omitted, the plugin uses its default value.
+
+`startMove` selects the initial board position from the PGN main line while keeping the full game available for navigation. If the requested move is not present, the viewer starts from the initial position.
 
 ## Development
 

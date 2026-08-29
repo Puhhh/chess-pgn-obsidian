@@ -6,6 +6,7 @@ import {
   MAX_CHESS_BLOCK_CHARS,
   MAX_GAME_NODES,
   parseChessBlock,
+  resolveStartMoveNodeId,
 } from '../src/chess/block';
 
 describe('parseChessBlock', () => {
@@ -53,6 +54,29 @@ fen: ${fen}`;
     expect(block.pgn).toBe('');
     expect(block.warnings).toEqual([]);
   });
+
+  it('parses white and black startMove options', () => {
+    expect(parseChessBlock('startMove: 5\n1. e4').options.startMove).toEqual({
+      moveNumber: 5,
+      color: 'white',
+    });
+    expect(parseChessBlock('startMove: 5...\n1. e4').options.startMove).toEqual({
+      moveNumber: 5,
+      color: 'black',
+    });
+  });
+
+  it.each(['0', '-1', '01', '1.0', '1e3', '5..', '5...suffix', '9007199254740992'])(
+    'rejects invalid startMove value %s',
+    value => {
+      const block = parseChessBlock(`startMove: ${value}\n1. e4`);
+
+      expect(block.options.startMove).toBeUndefined();
+      expect(block.warnings).toEqual([
+        'Invalid startMove option: expected a positive move number such as 5 or 5...',
+      ]);
+    },
+  );
 
   it('rejects oversized chess block source before parsing options', () => {
     expect(() => parseChessBlock('1. e4 '.repeat(Math.ceil(MAX_CHESS_BLOCK_CHARS / 6) + 1))).toThrow(
@@ -301,5 +325,39 @@ describe('buildGameState', () => {
     }
 
     expect(() => buildGameState(moves.join(' '))).toThrow(/too many moves or variations/i);
+  });
+});
+
+describe('resolveStartMoveNodeId', () => {
+  it('resolves white and black moves on the main line', () => {
+    const state = buildGameState('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6');
+
+    expect(resolveStartMoveNodeId(state, { moveNumber: 2, color: 'white' })).toBe('0.0.0');
+    expect(resolveStartMoveNodeId(state, { moveNumber: 2, color: 'black' })).toBe('0.0.0.0');
+  });
+
+  it('does not select a matching move from a variation', () => {
+    const state = buildGameState('1. e4 e5 (1... c5 2. Nf3) 2. Bc4');
+
+    expect(resolveStartMoveNodeId(state, { moveNumber: 2, color: 'white' })).toBe('0.0.0');
+  });
+
+  it('returns undefined for missing moves and static FEN states', () => {
+    const pgnState = buildGameState('1. e4 e5');
+    const fenState = buildGameState('8/8/8/8/8/8/8/8 w - - 0 1');
+
+    expect(resolveStartMoveNodeId(pgnState, { moveNumber: 9, color: 'white' })).toBeUndefined();
+    expect(resolveStartMoveNodeId(fenState, { moveNumber: 1, color: 'white' })).toBeUndefined();
+  });
+
+  it('uses the FEN fullmove number and side to move', () => {
+    const state = buildGameState(`[FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 20"]
+[SetUp "1"]
+
+20... e5 21. e4`);
+
+    expect(resolveStartMoveNodeId(state, { moveNumber: 20, color: 'black' })).toBe('0');
+    expect(resolveStartMoveNodeId(state, { moveNumber: 21, color: 'white' })).toBe('0.0');
+    expect(resolveStartMoveNodeId(state, { moveNumber: 20, color: 'white' })).toBeUndefined();
   });
 });
