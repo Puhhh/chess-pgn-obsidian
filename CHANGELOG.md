@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-No unreleased changes yet.
+### Added
+
+- Added a `startMove` chess block option for opening a full PGN at a specific mainline move.
 
 ## [0.1.19] - 2026-07-27
 

@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { buildGameState, parseChessBlock } from '../src/chess/block';
+import { buildGameState, parseChessBlock, resolveStartMoveNodeId } from '../src/chess/block';
 import {
   ChessViewer,
   computeBoardGeometry,
@@ -278,6 +278,35 @@ describe('ChessViewer', () => {
     expect(container.querySelector('.chess-pgn-viewer__content')).toBe(content);
   });
 
+  it('renders the configured mainline move as the initial active board position', () => {
+    installObsidianDomHelpers();
+    installResizeObserver();
+
+    const gameState = buildGameState('1. e4 e5 2. Nf3 Nc6');
+    const initialNodeId = resolveStartMoveNodeId(gameState, { moveNumber: 2, color: 'black' });
+    const container = document.createElement('div');
+    container.dataset.testWidth = '423';
+    new ChessViewer(
+      container,
+      gameState,
+      {
+        orientation: 'white',
+        showMoves: true,
+        showComments: true,
+        showVariations: true,
+      },
+      { initialNodeId },
+    );
+
+    expect(container.querySelector('.chess-pgn-viewer__move.is-active')?.textContent).toBe('2... Nc6');
+    expect(
+      container.querySelector('.chess-pgn-viewer__square[data-square="c6"] .chess-pgn-viewer__piece.is-black'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.chess-pgn-viewer__square[data-square="b8"] .chess-pgn-viewer__piece.is-black'),
+    ).toBeNull();
+  });
+
   it('renders board annotations visually and does not leak raw PGN tags into comments', () => {
     installObsidianDomHelpers();
     installResizeObserver();
@@ -434,8 +463,8 @@ fen: r2qrbk1/1bp2pp1/p2p1n1p/1p6/Pn1PP3/5N1P/1P1N1PP1/RBBQR1K1 b - - 2 17`);
     expect(container.querySelector('.chess-pgn-viewer__controls')).not.toBeNull();
     expect(container.querySelector('.chess-pgn-viewer__notation-panel')).not.toBeNull();
     expect(Array.from(container.querySelectorAll('.chess-pgn-viewer__move')).map(move => move.textContent)).toEqual([
-      '1. Nf3',
-      '1... Nc6',
+      '2. Nf3',
+      '2... Nc6',
     ]);
   });
 
